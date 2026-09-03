@@ -1,22 +1,20 @@
 import json
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 import streamlit as st
-# Fixed Deprecated Import
 from langchain_ollama import OllamaLLM
 
 # ---------------------------------------------------------
-# 1. Advanced Tactical UI & Dashboard Configuration
+# 1. Dashboard & UI Configuration
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="APEX-SEC | Interactive Cyber Operations Engine",
+    page_title="APEX-SEC | Cyber Operations Engine",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Dark Tactical / Cyberpunk Dashboard Styling
 st.markdown("""
     <style>
     .main { background-color: #0d1117; color: #c9d1d9; }
@@ -43,7 +41,7 @@ st.markdown("""
 KB_FILE = "live_vuln_db.json"
 
 # ---------------------------------------------------------
-# 2. System Diagnostics & Vulnerability Management Engine
+# 2. Vulnerability Tracker Module
 # ---------------------------------------------------------
 class VulnerabilityTracker:
     def __init__(self, system_id: str = "TARGET-ASSET-01"):
@@ -56,7 +54,7 @@ class VulnerabilityTracker:
             "ip_address": ip_address,
             "mac_address": mac_address,
             "os_info": os_info,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def add_vulnerability_reference(self, cve_id: str, severity: str, description: str, mitigation: str):
@@ -65,7 +63,7 @@ class VulnerabilityTracker:
             "severity": severity,
             "description": description,
             "mitigation_guidance": mitigation,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         self.knowledge_base.append(entry)
 
@@ -81,47 +79,52 @@ if "v_tracker" not in st.session_state:
     st.session_state.v_tracker = VulnerabilityTracker()
 
 # ---------------------------------------------------------
-# 3. Dynamic Live Threat Intelligence Engine (CISA KEV)
+# 3. Dynamic Threat Intelligence Engine (CISA KEV)
 # ---------------------------------------------------------
 def sync_latest_threat_intelligence():
-    """Synchronizes real-time actively exploited vulnerabilities from CISA KEV."""
     url = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
     try:
         res = requests.get(url, timeout=12)
         if res.status_code == 200:
-            data = res.json().get("vulnerabilities", [])[:50]  # Reduced for optimal LLM context size
+            data = res.json().get("vulnerabilities", [])[:50]
             with open(KB_FILE, "w") as f:
                 json.dump(data, f, indent=4)
-            return True, f"Success! Synced {len(data)} active exploits and CVEs into knowledge base."
-        return False, "Failed to connect to global threat intelligence server."
+            return True, f"Synced {len(data)} active exploits into knowledge base."
+        return False, "Failed to connect to threat intel feed."
     except Exception as e:
         return False, str(e)
 
 # ---------------------------------------------------------
-# 4. Sidebar Controls & Operational Indicators
+# 4. Sidebar Controls
 # ---------------------------------------------------------
 st.title("🛡️ APEX-SEC: Advanced Interactive Security Assistant")
-st.caption("⚡ Step-by-Step Cyber Operations Engine | Local Ollama Llama 3 Core | 100% Encrypted")
+st.caption("⚡ Step-by-Step Cyber Operations Engine | Local Ollama Core")
 
 with st.sidebar:
     st.header("⚙️ Command Center")
     st.markdown("---")
     
-    st.subheader("🔄 Threat Intelligence Synchronization")
-    if st.button("🚀 Synchronize Vulnerability Database"):
+    st.subheader("🔄 Threat Intelligence Sync")
+    if st.button("🚀 Synchronize Database"):
         status, msg = sync_latest_threat_intelligence()
         if status:
             st.success(msg)
+            st.rerun()
         else:
             st.error(msg)
             
     st.markdown("---")
+    if st.button("🗑️ Clear Chat History"):
+        st.session_state.messages = []
+        st.rerun()
+
+    st.markdown("---")
     st.subheader("📊 Engine Status")
     st.success("🟢 AI Core: Active (Llama 3)")
-    st.info("🗣️ Processing: Multilingual Natural Language Support")
-    st.warning("🔒 Privacy: 100% On-Premises Air-Gapped Execution")
+    st.info("🗣️ Processing: Multilingual Support")
+    st.warning("🔒 Privacy: 100% On-Premises Execution")
 
-# Load Active Threat Intelligence Content into System Context
+# Load Active Knowledge Base
 kb_context = ""
 if os.path.exists(KB_FILE):
     try:
@@ -134,7 +137,7 @@ if os.path.exists(KB_FILE):
         kb_context = ""
 
 # ---------------------------------------------------------
-# 5. Master AI Mentor System Persona
+# 5. Master Persona & Directives
 # ---------------------------------------------------------
 SYSTEM_PROMPT = f"""
 You are APEX-SEC, an elite Principal Security Researcher, Master Penetration Tester, Red Team Lead, and Blue Team Defense Analyst.
@@ -159,22 +162,20 @@ Always maintain a professional, analytical, and highly structured step-by-step g
 """
 
 # ---------------------------------------------------------
-# 6. Core Model Execution & Interactive Chat Interface
+# 6. Model Execution & Chat Interface
 # ---------------------------------------------------------
 try:
     llm = OllamaLLM(model="llama3", system=SYSTEM_PROMPT)
 except Exception:
-    st.error("⚠️ Local AI Engine Offline! Please run 'ollama run llama3' in your local terminal.")
+    st.error("⚠️ Local AI Engine Offline! Please run 'ollama run llama3' in your terminal.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Conversation History
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# User Prompt Processing
 if prompt := st.chat_input("Enter target scope, command output, bug query, or error log..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -182,7 +183,7 @@ if prompt := st.chat_input("Enter target scope, command output, bug query, or er
 
     with st.chat_message("assistant"):
         res_box = st.empty()
-        with st.spinner("⚡ APEX-SEC analyzing operational vectors and threat parameters..."):
+        with st.spinner("⚡ APEX-SEC analyzing parameters..."):
             try:
                 response = llm.invoke(prompt)
                 res_box.markdown(response)
