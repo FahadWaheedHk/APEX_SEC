@@ -1,14 +1,15 @@
-# ⚡ APEX-SEC: Enterprise AI Cyber Operations Suite
+# ⚡ HK-APEX: Enterprise AI Cyber Operations Suite
 
 > **The On-Premises Red & Blue Team Tactical Command System**
+> **Developed by Fahad Waheed (HK-APEX)**
 
 ---
 
 ## 🎯 Overview
 
-**APEX-SEC** is an enterprise-grade, 100% air-gapped Cyber Operations Suite engineered for **Principal Security Researchers, Red Team Operators, Bug Bounty Hunters, and SOC Analysts**. 
+**HK-APEX** is an enterprise-grade, 100% air-gapped Cyber Operations Suite engineered for **Principal Security Researchers, Red Team Operators, Bug Bounty Hunters, and SOC Analysts**. 
 
-Unlike generic AI wrappers that dump detectable payload lists, APEX-SEC functions as an **interactive tactical operator**. It enforces structured offensive methodologies by evaluating target parameters—OS architecture, network scope, technology stack, and raw terminal logs—before generating precise attack vectors, payload adjustments, and defensive mitigations.
+Unlike generic AI wrappers that dump detectable payload lists, HK-APEX functions as an **interactive tactical operator**. It enforces structured offensive methodologies by evaluating target parameters—OS architecture, network scope, technology stack, and raw terminal logs—before generating precise attack vectors, payload adjustments, and defensive mitigations.
 
 ---
 
@@ -71,10 +72,11 @@ Unlike generic AI wrappers that dump detectable payload lists, APEX-SEC function
 
 ## ⚙️ Step-by-Step Installation
 
+Follow these instructions in order. Click the copy icon on any code block to instantly copy the command.
+
 ### Windows Setup
 
-#### Step 1: Launch Terminal as Administrator
-
+### Step 1: Launch Terminal as Administrator
 ```cmd
 cmd
 
@@ -126,6 +128,7 @@ Step 3: Launch Tactical Command Suite
 streamlit run apex_sec.py
 
 Step 4: Access Web Application Interface
+Open your browser and navigate to:
 http://localhost:8501
 
 📡 Threat Intelligence Sync
@@ -134,12 +137,15 @@ Open the left sidebar within the dashboard UI.
 Step 2: Trigger Database Update
 Click Synchronize Vulnerability Database.
 Step 3: Local CISA Feed Verification
-APEX-SEC fetches active exploitation parameters directly from CISA KEV and updates live_vuln_db.json locally.
+HK-APEX fetches active exploitation parameters directly from CISA KEV and updates live_vuln_db.json locally.
 ⚖️ Legal Disclaimer
 > 🔴 MANDATORY NOTICE & COMPLIANCE:
-> APEX-SEC is engineered strictly for authorized security audits, educational research, defensive infrastructure hardening, and legitimate bug bounty research.
+> HK-APEX is engineered strictly for authorized security audits, educational research, defensive infrastructure hardening, and legitimate bug bounty research.
 >  * Explicit Written Permission: Operators must secure explicit, written authorization from target system owners prior to executing security assessments.
 >  * Regulatory Adherence: Users hold sole responsibility for complying with all local, national, and international cybersecurity laws.
 >  * Zero Liability: The developer accepts no legal responsibility or liability for unauthorized access, system damage, or illegal activities conducted with this software suite.
 > 
+<div align="center">
+<p><b>Developed with ⚡ by Fahad Waheed (APEX_SEC)</b></p>
+</div>
 
