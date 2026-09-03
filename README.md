@@ -285,9 +285,9 @@ http://localhost:8501
 | :--- | :--- |
 | **Lead Operator** | `Fahad Waheed HK (APEX_SEC)` |
 | **GitHub Repository** | [github.com/fahadwaheedhk](https://github.com/fahadwaheedhk) |
-| **Professional Network** | [linkedin.com/in/fahadwaheedhk](https://linkedin.com/in/fahadwaheedhk) |
-| **Global Communications** | [@fahadwaheedhk](https://twitter.com/fahadwaheedhk) |
-| **Secure Cryptographic Email** | `fahadwaheedhk@proton.me` |
+| **Professional Network** | [linkedin.com/in/fahadwaheedhk](https://linkedin.com/in/fahad-waheed-hk-7a128932a) |
+| **Global Communications** | [@Fahad_Waheed_Hk](https://x.com/fahad_waheed_hk?s=11) |
+| **Secure Cryptographic Email** | `fahadwaheedhk@protommail.com` |
 
 ---
 
