@@ -131,7 +131,7 @@ Step 6: Pull & Launch Llama 3 Core Model
 Download and run the Llama 3 model locally.
 
 ```bash
-pip3 install streamlit requests langchain langchain-community langchain-ollama
+ollama run llama3
 ```
 
 ---
