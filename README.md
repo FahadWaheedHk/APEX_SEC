@@ -286,7 +286,7 @@ http://localhost:8501
 | **GitHub Repository** | [github.com/fahadwaheedhk](https://github.com/fahadwaheedhk) |
 | **Professional Network** | [linkedin.com/in/fahadwaheedhk](https://linkedin.com/in/fahad-waheed-hk-7a128932a) |
 | **Global Communications** | [@Fahad_Waheed_Hk](https://x.com/fahad_waheed_hk?s=11) |
-| **Secure Cryptographic Email** | `fahadwaheedhk@protommail.com` |
+| **Secure Cryptographic Email** | `fahadwaheedhk@protonmail.com` |
 
 ---
 
