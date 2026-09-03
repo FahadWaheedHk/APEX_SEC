@@ -3,7 +3,8 @@ import os
 import requests
 from datetime import datetime
 import streamlit as st
-from langchain_community.llms import Ollama
+# Fixed Deprecated Import
+from langchain_ollama import OllamaLLM
 
 # ---------------------------------------------------------
 # 1. Advanced Tactical UI & Dashboard Configuration
@@ -51,7 +52,6 @@ class VulnerabilityTracker:
         self.system_metadata = {}
 
     def set_system_metadata(self, ip_address: str, mac_address: str, os_info: str):
-        """Stores target system configuration details for contextual analysis."""
         self.system_metadata = {
             "ip_address": ip_address,
             "mac_address": mac_address,
@@ -60,7 +60,6 @@ class VulnerabilityTracker:
         }
 
     def add_vulnerability_reference(self, cve_id: str, severity: str, description: str, mitigation: str):
-        """Registers a vulnerability record into the local tracking matrix."""
         entry = {
             "cve_id": cve_id,
             "severity": severity,
@@ -71,7 +70,6 @@ class VulnerabilityTracker:
         self.knowledge_base.append(entry)
 
     def export_report(self) -> str:
-        """Exports structured tracking data to JSON format."""
         report = {
             "system_id": self.system_id,
             "metadata": self.system_metadata,
@@ -79,7 +77,6 @@ class VulnerabilityTracker:
         }
         return json.dumps(report, indent=4)
 
-# Initialize local tracker state
 if "v_tracker" not in st.session_state:
     st.session_state.v_tracker = VulnerabilityTracker()
 
@@ -92,7 +89,7 @@ def sync_latest_threat_intelligence():
     try:
         res = requests.get(url, timeout=12)
         if res.status_code == 200:
-            data = res.json().get("vulnerabilities", [])[:150]
+            data = res.json().get("vulnerabilities", [])[:50]  # Reduced for optimal LLM context size
             with open(KB_FILE, "w") as f:
                 json.dump(data, f, indent=4)
             return True, f"Success! Synced {len(data)} active exploits and CVEs into knowledge base."
@@ -124,10 +121,17 @@ with st.sidebar:
     st.info("🗣️ Processing: Multilingual Natural Language Support")
     st.warning("🔒 Privacy: 100% On-Premises Air-Gapped Execution")
 
-# Load Active Threat Intelligence Context
+# Load Active Threat Intelligence Content into System Context
 kb_context = ""
 if os.path.exists(KB_FILE):
-    kb_context = "\n[LIVE THREAT INTELLIGENCE ACTIVE: CISA Known Exploited Vulnerabilities Mapped]"
+    try:
+        with open(KB_FILE, "r") as f:
+            cisa_data = json.load(f)
+            kb_context = "\n[LIVE CISA THREAT INTEL AGGREGATED]:\n" + "\n".join(
+                [f"- {item.get('cveID')}: {item.get('shortDescription')}" for item in cisa_data[:20]]
+            )
+    except Exception:
+        kb_context = ""
 
 # ---------------------------------------------------------
 # 5. Master AI Mentor System Persona
@@ -158,7 +162,7 @@ Always maintain a professional, analytical, and highly structured step-by-step g
 # 6. Core Model Execution & Interactive Chat Interface
 # ---------------------------------------------------------
 try:
-    llm = Ollama(model="llama3", system=SYSTEM_PROMPT)
+    llm = OllamaLLM(model="llama3", system=SYSTEM_PROMPT)
 except Exception:
     st.error("⚠️ Local AI Engine Offline! Please run 'ollama run llama3' in your local terminal.")
 
