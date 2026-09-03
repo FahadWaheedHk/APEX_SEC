@@ -3,7 +3,7 @@ import os
 import requests
 from datetime import datetime, timezone
 import streamlit as st
-from langchain_ollama import OllamaLLM
+from langchain_community.llms import Ollama
 
 # ---------------------------------------------------------
 # 1. Dashboard & UI Configuration
@@ -95,7 +95,7 @@ def sync_latest_threat_intelligence():
         return False, str(e)
 
 # ---------------------------------------------------------
-# 4. Sidebar Controls
+# 4. Sidebar Controls & Scope Configuration
 # ---------------------------------------------------------
 st.title("🛡️ APEX-SEC: Advanced Interactive Security Assistant")
 st.caption("⚡ Step-by-Step Cyber Operations Engine | Local Ollama Core")
@@ -104,6 +104,15 @@ with st.sidebar:
     st.header("⚙️ Command Center")
     st.markdown("---")
     
+    st.subheader("🎯 Target Profile")
+    target_ip = st.text_input("Target IP / Scope", value="192.168.1.1")
+    target_os = st.text_input("Target OS", value="Linux / Kali")
+    
+    if st.button("📌 Save Target Parameters"):
+        st.session_state.v_tracker.set_system_metadata(target_ip, "N/A", target_os)
+        st.success("Target metadata saved successfully!")
+
+    st.markdown("---")
     st.subheader("🔄 Threat Intelligence Sync")
     if st.button("🚀 Synchronize Database"):
         status, msg = sync_latest_threat_intelligence()
@@ -143,19 +152,19 @@ SYSTEM_PROMPT = f"""
 You are APEX-SEC, an elite Principal Security Researcher, Master Penetration Tester, Red Team Lead, and Blue Team Defense Analyst.
 You act as an interactive, step-by-step security mentor and technical advisor.
 
+Current Active Scope:
+- Target IP: {target_ip}
+- Target OS: {target_os}
+
 Operational Directives & Response Rules:
 1. Interactive Step-by-Step Methodology:
    - Do NOT provide massive script dumps immediately. Guide the user sequentially step-by-step.
-   - When a user initiates a testing query (e.g., Web App Assessment, Network Recon, Vulnerability Audit), FIRST request essential contextual parameters:
-     * Target IP / Domain / Authorized Scope
-     * Target OS / Architecture / MAC Address / Environment Details
-     * Exact error outputs, log snippets, or HTTP responses if an operation fails.
+   - When a user initiates a testing query, evaluate the target environment first and request missing details if needed.
    - Analyze errors deeply (WAF blocks, privilege escalation issues, syntax mismatches) and suggest step-by-step adjustments.
 
 2. Comprehensive Vulnerability & Research Expertise:
-   - Deep knowledge of all web vulnerability classes: SQL Injection, XSS, IDOR, SSRF, RCE, OAuth/JWT bypasses, Race Conditions, Business Logic Flaws, and GraphQL flaws.
-   - Coverage of network security, packet artifacts, MAC/OUI analysis, cloud hardening (AWS/Kubernetes), and SIEM detection rules (Sigma/YARA/Snort).
-   - Dynamic reference to emerging CVEs and zero-day research discussions using live threat intelligence feeds.
+   - Deep knowledge of web vulnerability classes: SQL Injection, XSS, IDOR, SSRF, RCE, OAuth/JWT bypasses, Race Conditions, Business Logic Flaws, and GraphQL flaws.
+   - Coverage of network security, packet artifacts, cloud hardening (AWS/Kubernetes), and SIEM detection rules (Sigma/YARA/Snort).
 
 {kb_context}
 Always maintain a professional, analytical, and highly structured step-by-step guidance workflow.
@@ -165,7 +174,7 @@ Always maintain a professional, analytical, and highly structured step-by-step g
 # 6. Model Execution & Chat Interface
 # ---------------------------------------------------------
 try:
-    llm = OllamaLLM(model="llama3", system=SYSTEM_PROMPT)
+    llm = Ollama(model="llama3", system=SYSTEM_PROMPT)
 except Exception:
     st.error("⚠️ Local AI Engine Offline! Please run 'ollama run llama3' in your terminal.")
 
