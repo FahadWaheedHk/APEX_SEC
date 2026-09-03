@@ -68,7 +68,7 @@ Unlike generic AI wrappers that dump detectable payload lists, APEX-SEC function
 ---
 ⚙️ Step-by-Step Installation
 
-⚠️ IMPORTANT: Follow these instructions in order. Each command is in a dedicated code block for instant one-click copying.
+⚠️ IMPORTANT: Follow these instructions in order. Each commands in a dedicated code black for instant one-click copyings
 
 ---
 
@@ -283,7 +283,6 @@ http://localhost:8501
 
 | Ecosystem | Professional Profile / Direct Channel |
 | :--- | :--- |
-| **Lead Operator** | `Fahad Waheed HK (APEX_SEC)` |
 | **GitHub Repository** | [github.com/fahadwaheedhk](https://github.com/fahadwaheedhk) |
 | **Professional Network** | [linkedin.com/in/fahadwaheedhk](https://linkedin.com/in/fahad-waheed-hk-7a128932a) |
 | **Global Communications** | [@Fahad_Waheed_Hk](https://x.com/fahad_waheed_hk?s=11) |
@@ -292,7 +291,5 @@ http://localhost:8501
 ---
 
 <div align="center">
-
-### Engineered with ⚡ and Precision by Fahad Waheed HK (APEX_SEC)
 
 </div>
