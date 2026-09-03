@@ -141,7 +141,7 @@ Step 7: Install Required Dependencies
 Install Python packages for the application.
 
 ```bash
-pip install streamlit requests langchain langchain-community
+pip install streamlit requests langchain langchain-community langchain-ollama
 ```
 
 ---
