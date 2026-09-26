@@ -1,232 +1,259 @@
-# ⚡ APEX_SEC: Enterprise AI Cyber Operations Suite
+# ⚡ APEX-SEC
 
-### *The On-Premises Red & Blue Team Tactical Command System*
-**Developed by Fahad Waheed HK (APEX_SEC)**
+<div align="center">
 
----
+### Enterprise AI Cyber Operations Suite
 
-## 🎯 Overview
-
-**APEX_SEC** is an enterprise-grade, 100% air-gapped Cyber Operations Suite engineered for Principal Security Researchers, Red Team Operators, Bug Bounty Hunters, and SOC Analysts.
-
-Unlike generic AI wrappers that dump detectable payload lists, APEX-SEC functions as an interactive tactical operator. It enforces structured offensive methodologies by evaluating target parameters—OS architecture, network scope, technology stack, and raw terminal logs—before generating precise attack vectors, payload adjustments, and defensive mitigations.
+**The On-Premises Red & Blue Team Tactical Command System**
 
 ---
 
-## 📋 Table of Contents
+**Version** `1.0.0` · **Platform** `Linux` · **License** `MIT` · **Engine** `Ollama + Llama 3`
 
-- [Overview](#-overview)
-- [Core Capabilities](#-core-capabilities)
-- [Anonymity & Security Features](#-anonymity--security-features)
-- [System Requirements](#-system-requirements)
-- [Step-by-Step Installation](#-step-by-step-installation)
-  - [Windows Setup](#windows-setup)
-  - [Linux / Kali Linux Setup](#linux--kali-linux-setup)
-- [Execution & Deployment](#-execution--deployment)
-- [Threat Intelligence Sync](#-threat-intelligence-sync)
-- [Legal Disclaimer](#-legal-disclaimer)
+**Built by:** Fahad Waheed HK — *For the Operators, by an Operator.*
 
 ---
 
-## 🛡️ Core Capabilities
+</div>
+
+---
+
+## 📖 Navigation Menu
+
+| # | Section | Description |
+| :---: | :--- | :--- |
+| 1 | [🎯 Overview](#1--overview) | What is APEX-SEC and why it exists |
+| 2 | [⚔️ Core Capabilities](#2-️-core-capabilities) | Red · Blue · API · IoT operations |
+| 3 | [🎭 Operator Personas](#3--operator-personas) | 12 specialized operator roles |
+| 4 | [🧰 Built-in Tools](#4--built-in-tools) | Encoders, hashers, generators |
+| 5 | [🔐 Security Model](#5--security-model) | Air-gapped, local-only design |
+| 6 | [💻 System Requirements](#6--system-requirements) | RAM · Storage · CPU · OS |
+| 7 | [📦 Step-by-Step Installation](#7--step-by-step-installation) | Manual setup, one command at a time |
+| 8 | [🚀 Launch Sequence](#8--launch-sequence) | How to start the tool |
+| 9 | [🎬 First-Run Walkthrough](#9--first-run-walkthrough) | Your first 5 minutes inside APEX-SEC |
+| 10 | [📡 Threat Intelligence Sync](#10--threat-intelligence-sync) | CISA KEV + NVD workflow |
+| 11 | [🗂 Project Structure](#11--project-structure) | Files and folders |
+| 12 | [🛠 Troubleshooting](#12--troubleshooting) | Fix common issues |
+| 13 | [⚖️ Legal & Educational Purpose](#13-️-legal--educational-purpose) | Compliance notice |
+| 14 | [📞 Connect with the Developer](#14--connect-with-the-developer) | Developer channels |
+| 15 | [🎁 Appendix — Quick Command Reference](#15--appendix--quick-command-reference) | All commands in one place |
+
+---
+
+## 1 · 🎯 Overview
+
+**APEX-SEC** is a fully **on-premises, air-gapped Cyber Operations Suite** designed for Principal Security Researchers, Red Team Operators, Bug Bounty Hunters, and SOC Analysts.
+
+It is not another AI chatbot. It is a **tactical operator assistant** that:
+
+- Evaluates target parameters — OS, scope, tech stack, terminal logs
+- Guides the operator through **structured offensive methodologies**, step by step
+- Generates **precise attack vectors, payloads, and defensive mitigations**
+- Stores every session, finding, and screenshot **locally** — no cloud, no leaks
+
+Whether you are profiling an attack surface, tracking a live CVE, generating a professional engagement report, or studying detection engineering — APEX-SEC keeps you in the driver's seat with **one consistent, expert-level workflow**.
+
+---
+
+## 2 · ⚔️ Core Capabilities
 
 ### 🔴 Red Team Operations
+
 | Capability | Description |
 | :--- | :--- |
-| **Guided Methodology** | Mentors operators through Reconnaissance, Scope Profiling, Parameter Analysis, Injection/Bypass, and Privilege Escalation |
-| **Full-Spectrum Bug Coverage** | Web Applications, REST/GraphQL APIs, and Core Infrastructure |
-| **Supported Attack Vectors** | SQLi, XSS, IDOR, SSRF, RCE, OAuth 2.0/JWT Bypasses, Race Conditions, Business Logic Flaws |
+| **Guided Methodology** | Reconnaissance → Scope Profiling → Parameter Analysis → Injection/Bypass → Privilege Escalation |
+| **Full-Spectrum Coverage** | Web Applications · REST/GraphQL APIs · Core Infrastructure · IoT Devices |
+| **Attack Vectors** | SQLi · XSS · IDOR · SSRF · CSRF · RCE · LFI · XXE · SSTI · JWT/OAuth Bypasses · Race Conditions · Business Logic Flaws · Deserialization |
+| **Payload Library** | 50+ curated payloads across 12 categories |
 
 ### 🔵 Blue Team Engineering
+
 | Capability | Description |
 | :--- | :--- |
-| **Signature Generation** | Converts attack vectors into production-ready Sigma, YARA, and Snort detection rules |
-| **Infrastructure Hardening** | Automated baseline checks for Docker, Kubernetes, AWS, and Linux environments |
+| **Detection Engineering** | Sigma · YARA · Snort · Suricata signatures |
+| **Infrastructure Hardening** | Docker · Kubernetes · AWS · Linux baselines |
+| **Compliance Mapping** | PCI-DSS · HIPAA · SOC2 · ISO 27001 · NIST CSF |
 
----
+### 🔌 API Security Testing
 
-## 🔐 Anonymity & Security Features
-
-| Feature | Purpose |
+| Capability | Description |
 | :--- | :--- |
-| **Local LLM Engine** | Operates 100% offline via Ollama; no data leaves physical hardware |
-| **Log Sanitization** | Automatically strips credentials and IP addresses from output |
-| **Session Isolation** | Volatile in-memory processing with no cloud tracking |
-| **Local Threat Cache** | CISA KEV feed cached locally in structured JSON format |
+| **REST Methodology** | Endpoint enum → injection → auth bypass (10 steps) |
+| **GraphQL Methodology** | Introspection abuse · batching · IDOR via nodes |
+| **Auth Checklist** | BOLA · BFLA · JWT tampering · mass assignment |
+| **curl Generator** | Ready-to-run HTTP request templates |
+
+### 📡 IoT / Network Reconnaissance
+
+| Capability | Description |
+| :--- | :--- |
+| **Network Discovery** | nmap ping-sweep · arp-scan · netdiscover |
+| **Port Scanning** | Full · service · UDP · masscan |
+| **IoT Protocols** | MQTT · CoAP · UPnP · RTSP · Modbus · Telnet |
+| **Web Recon** | whatweb · gobuster · nikto · nuclei · ffuf |
 
 ---
 
-## 💻 System Requirements
+## 3 · 🎭 Operator Personas
 
-| System Resource | Minimum Requirement | Recommended Rig |
+| Icon | Persona | Specialty |
+| :---: | :--- | :--- |
+| 🛡️ | **APEX-SEC (Default)** | Master Pentester — Full spectrum |
+| 🔴 | **Red Team Lead** | Adversary Simulation |
+| 🔵 | **Blue Team Analyst** | Detection Engineering |
+| 🎯 | **Bug Bounty Hunter** | Web / API Exploitation |
+| 💣 | **Exploit Developer** | Memory Corruption |
+| ☁️ | **Cloud Security Architect** | AWS · Azure · GCP |
+| 🔌 | **API Security Specialist** | REST · GraphQL · gRPC |
+| 📡 | **IoT / Hardware Hacker** | Firmware · UART/JTAG · MQTT |
+| 🦠 | **Malware Analyst** | Reverse Engineering |
+| 🎭 | **Social Engineer** | Phishing & Pretexting |
+| 📋 | **Compliance Auditor** | PCI · HIPAA · SOC2 · NIST |
+| ✏️ | **Custom Persona** | User-defined role |
+
+---
+
+## 4 · 🧰 Built-in Tools
+
+| Tool | Purpose |
+| :--- | :--- |
+| **Hash Generator** | MD5 · SHA1 · SHA256 · SHA512 |
+| **Base64 Encoder / Decoder** | Encode or decode Base64 strings |
+| **URL Encoder / Decoder** | Percent-encoding for URLs |
+| **JWT Decoder** | Decode Header · Payload · Signature |
+| **Reverse Shell Generator** | Bash · Python3 · NC · PowerShell · PHP · Perl |
+| **CVE Lookup** | Live NVD API query |
+
+---
+
+## 5 · 🔐 Security Model
+
+| Layer | Implementation |
+| :--- | :--- |
+| **LLM Engine** | Local Ollama — no external API calls |
+| **Persistence** | SQLite on local disk — never synced |
+| **Threat Feed** | CISA KEV cached locally in JSON |
+| **Evidence Vault** | Screenshots stored in `config/evidence/` |
+| **Session Isolation** | Unique session IDs — no cross-contamination |
+| **Network** | Zero outbound traffic after model pull |
+
+> 🛡️ **Air-Gapped by Design.** Once dependencies are installed, APEX-SEC works entirely offline.
+
+---
+
+## 6 · 💻 System Requirements
+
+| Resource | Minimum | Recommended |
 | :--- | :--- | :--- |
-| **RAM (Memory)** | 8 GB DDR4 | 16 GB – 32 GB DDR4 / DDR5 |
-| **Storage Space** | 12 GB Free Space | 25 GB NVMe SSD |
-| **Processor** | Intel Core i5 (8th Gen) / AMD Ryzen 5 | Intel Core i7 / i9 or AMD Ryzen 7 / 9 |
-| **Operating System** | Windows 10/11, Kali Linux, Ubuntu | Windows 11 / Kali Linux 2024.x |
+| **RAM** | 8 GB DDR4 | 16–32 GB DDR4/DDR5 |
+| **Storage (Free)** | 12 GB | 25 GB NVMe SSD |
+| **CPU** | Intel i5 (8th Gen) / Ryzen 5 | Intel i7/i9 · Ryzen 7/9 |
+| **GPU** | Optional | NVIDIA RTX (CUDA) |
+| **OS** | Any modern Linux | Kali Linux 2024.x · Ubuntu 22.04+ |
+| **Python** | 3.10+ | 3.11+ |
+| **Network** | Required for setup only | Wired preferred |
 
----
-⚙️ Step-by-Step Installation
+**Storage Breakdown**
 
-⚠️ IMPORTANT: Follow these instructions in order. Each commands in a dedicated code black for instant one-click copyings
-
----
-
-Windows Setup
-
----
-
-Step 1: Launch Terminal as Administrator
-
-Open Command Prompt with Administrator privileges.
-
-```cmd
-cmd
-```
+| Component | Size |
+| :--- | :--- |
+| Code + Virtual Environment | ~2 GB |
+| Python Libraries | ~4 GB |
+| Llama 3 Model | ~4.7 GB |
+| Cache + Logs | ~1 GB |
+| **Total** | **~12 GB** |
 
 ---
 
-Step 2: Install Python 3.11 Runtime
+## 7 · 📦 Step-by-Step Installation
 
-Download and install Python 3.11 using Windows Package Manager.
-
-```bash
-winget install Python.Python.3.11
-```
+> 🛠️ **Manual installation.** Copy each command one at a time, paste into your terminal, and press Enter.
+>
+> ⚠️ *Do NOT skip steps. Do NOT run the next command until the previous one finishes.*
 
 ---
 
-Step 3: Verify Python Installation
+### 🐧 Kali · Debian · Ubuntu
 
-Confirm Python is correctly installed and accessible.
-
-```bash
-python --version
-```
-
----
-
-Step 4: Install Ollama Engine
-
-Install the Ollama local LLM engine.
-
-```bash
-winget install Ollama.Ollama
-```
-
----
-
-Step 5: Verify Ollama Installation
-
-Confirm Ollama is correctly installed.
-
-```bash
-ollama --version
-```
-
----
-
-Step 6: Pull & Launch Llama 3 Core Model
-
-Download and run the Llama 3 model locally.
-
-```bash
-ollama run llama3
-```
-
----
-
-Step 7: Install Required Dependencies
-
-Install Python packages for the application.
-
-```bash
-pip install streamlit requests langchain langchain-community langchain-ollama
-```
-
----
-
-Linux / Kali Linux Setup
-
----
-
-Step 1: Update System Package List
-
-Refresh the package repository cache.
+**Step 1 — Update System Packages**
 
 ```bash
 sudo apt update
 ```
 
----
-
-Step 2: Upgrade Installed Packages
-
-Update all system packages to their latest versions.
-
 ```bash
 sudo apt upgrade -y
 ```
 
----
-
-Step 3: Install Python 3 & Tools
-
-Install Python 3, pip, virtual environment, and curl.
+**Step 2 — Install Python 3, pip, venv, curl, git**
 
 ```bash
-sudo apt install python3 python3-pip python3-venv curl -y
+sudo apt install python3 python3-pip python3-venv curl git -y
 ```
 
----
+**Step 3 — Verify Python Installation**
 
-Step 4: Install Ollama Engine
+```bash
+python3 --version
+```
 
-Download and install Ollama using the official installation script.
+**Step 4 — Install Ollama Engine**
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
----
-
-Step 5: Pull & Launch Llama 3 Model
-
-Download and run the Llama 3 model locally.
+**Step 5 — Verify Ollama Installation**
 
 ```bash
-ollama run llama3
+ollama --version
 ```
 
----
-
-Step 6: Install Python Dependencies
-
-Install required Python packages for the application.
+**Step 6 — Pull the Llama 3 Core Model**
 
 ```bash
-pip3 install streamlit requests langchain langchain-community
+ollama pull llama3
 ```
 
----
-
-🚀 Execution & Deployment
-
----
-
-Step 1: Navigate to Project Directory
-
-Change to the directory containing APEX_SEC.
+**Step 7 — Clone the APEX-SEC Repository**
 
 ```bash
-cd ~/Desktop
+cd ~
 ```
 
----
+```bash
+git clone https://github.com/fahadwaheedhk/apex-sec.git
+```
 
-Step 2: Set Execution Permissions
+```bash
+cd apex-sec
+```
 
-Make the APEX_SEC script executable.
+**Step 8 — Create a Python Virtual Environment**
+
+```bash
+python3 -m venv venv
+```
+
+```bash
+source venv/bin/activate
+```
+
+**Step 9 — Install Python Dependencies**
+
+```bash
+pip install --upgrade pip
+```
+
+```bash
+pip install streamlit requests langchain langchain-community langchain-ollama
+```
+
+**Step 10 — Verify All Files Are Present**
+
+```bash
+ls -la
+```
 
 ```bash
 chmod +x apex_sec.py
@@ -234,62 +261,378 @@ chmod +x apex_sec.py
 
 ---
 
-Step 3: Launch Tactical Command Suite
+### 🐧 Arch Linux
 
-Start the Streamlit application.
+**Step 1 — Update System**
+
+```bash
+sudo pacman -Syu
+```
+
+**Step 2 — Install Dependencies**
+
+```bash
+sudo pacman -S python python-pip git curl base-devel
+```
+
+**Step 3 — Install Ollama**
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Step 4 — Pull Model**
+
+```bash
+ollama pull llama3
+```
+
+**Step 5 — Clone Repository**
+
+```bash
+cd ~ && git clone https://github.com/fahadwaheedhk/apex-sec.git && cd apex-sec
+```
+
+**Step 6 — Create Virtual Environment**
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+```
+
+**Step 7 — Install Python Packages**
+
+```bash
+pip install --upgrade pip && pip install streamlit requests langchain langchain-community langchain-ollama
+```
+
+---
+
+### 🐧 Fedora · RHEL
+
+**Step 1 — Update System**
+
+```bash
+sudo dnf update -y
+```
+
+**Step 2 — Install Dependencies**
+
+```bash
+sudo dnf install python3 python3-pip git curl -y
+```
+
+**Step 3 — Install Ollama**
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Step 4 — Pull Model**
+
+```bash
+ollama pull llama3
+```
+
+**Step 5 — Clone Repository**
+
+```bash
+cd ~ && git clone https://github.com/fahadwaheedhk/apex-sec.git && cd apex-sec
+```
+
+**Step 6 — Create Virtual Environment**
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+```
+
+**Step 7 — Install Python Packages**
+
+```bash
+pip install --upgrade pip && pip install streamlit requests langchain langchain-community langchain-ollama
+```
+
+---
+
+## 8 · 🚀 Launch Sequence
+
+> 🖥️ **Open THREE separate terminals. Keep them all running.**
+
+### Terminal 1 — Start Ollama Engine
+
+```bash
+ollama serve
+```
+
+### Terminal 2 — Launch APEX-SEC Dashboard
+
+```bash
+cd ~/apex-sec
+```
+
+```bash
+source venv/bin/activate
+```
 
 ```bash
 streamlit run apex_sec.py
 ```
 
----
-
-Step 4: Access Web Application Interface
-
-Open your browser and navigate to the local server.
+### Terminal 3 — Monitor (Optional)
 
 ```bash
+htop
+```
+
+### Access the Web Interface
+
+Open your browser and navigate to:
+
+```
 http://localhost:8501
 ```
----
 
-## 📡 Threat Intelligence Synchronization
+### Remote Access (Lab / VM only)
 
-> **Real-Time CISA KEV Integration Pipeline**
-> APEX_SEC maintains a localized, air-gapped threat feed cache to evaluate active zero-day exploits and real-world attack vectors without relying on live external telemetry.
-
-| Sync Phase | Tactical Action | Operational Result |
-| :--- | :--- | :--- |
-| **Step 1: Access Interface** | Navigate to the dashboard UI | Open the primary control panel sidebar |
-| **Step 2: Trigger Sync** | Click **"Synchronize Vulnerability Database"** | Initiates local ingestion of recent threat intel |
-| **Step 3: Local CISA Verification** | Automated payload and vector comparison | Updates `live_vuln_db.json` on local storage |
+```bash
+streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
+```
 
 ---
 
-## ⚖️ Legal Disclaimer & Compliance
+## 9 · 🎬 First-Run Walkthrough
 
-> [!CAUTION]
-> **🔴 MANDATORY SECURITY COMPLIANCE NOTICE**
-> 
-> APEX-SEC is engineered strictly for authorized security audits, academic research, defensive infrastructure hardening, and legitimate bug bounty operations.
-> 
-> * **Explicit Authorization:** Operators must secure legal, written consent from target system owners prior to executing any security assessments.
-> * **Regulatory Adherence:** Users retain sole legal accountability for complying with all regional, national, and international cybersecurity frameworks.
-> * **Zero Liability:** The developer accepts absolute zero liability or responsibility for unauthorized intrusions, infrastructure damages, or malicious activities conducted utilizing this suite.
+| # | Step | Action |
+| :---: | :--- | :--- |
+| 1 | **Sidebar → Target Profile** | Enter target IP, OS, and environment details |
+| 2 | **Sidebar → AI Model Config** | Select `llama3` (or `dolphin-mixtral` for uncensored research) |
+| 3 | **Sidebar → Persona** | Choose your operator role (e.g., Bug Bounty Hunter) |
+| 4 | **Sidebar → Threat Intelligence** | Sync CISA feed to load live KEV entries |
+| 5 | **Chat Tab** | Start asking queries for step-by-step guidance |
+| 6 | **Payload Library** | Browse 50+ pre-built payloads |
+| 7 | **Reports Tab** | Export structured findings into Markdown · HTML · JSON |
 
 ---
 
-## 📞 Connect with the Developer
+## 10 · 📡 Threat Intelligence Sync
 
-| Ecosystem | Professional Profile / Direct Channel |
+| Step | Action | Result |
+| :---: | :--- | :--- |
+| 1 | Open dashboard at `http://localhost:8501` | Interface loads |
+| 2 | Sidebar → Threat Intelligence → **Sync CISA** | Ingests latest exploited CVEs |
+| 3 | Sidebar → **Cache Info** | Displays number of cached entries |
+| 4 | Tab → Tools → **CVE Lookup (NVD)** | Fetches a specific CVE from NIST |
+| 5 | Tab → Vulnerabilities → **Search CISA cache** | Filters KEV entries by keyword |
+
+---
+
+## 11 · 🗂 Project Structure
+
+```
+apex-sec/
+├── apex_sec.py              # Main application (single-file deployment)
+├── README.md                # Documentation
+├── LICENSE                  # MIT License
+├── requirements.txt         # Python dependencies
+├── .gitignore               # Ignore config/, venv/, __pycache__/
+└── config/                  # Auto-created on first run
+    ├── apex_config.json     # Persistent app configuration
+    ├── apex_memory.db       # SQLite conversation memory
+    ├── threat_intel.json    # Cached CISA KEV feed
+    ├── evidence/            # Uploaded screenshots & artifacts
+    ├── reports/             # Generated reports
+    └── apex_sec.log         # Application log
+```
+
+### `requirements.txt`
+
+```txt
+streamlit>=1.30.0
+requests>=2.31.0
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-ollama>=0.1.0
+```
+
+### `.gitignore`
+
+```
+__pycache__/
+*.pyc
+venv/
+.env
+config/
+.streamlit/
+*.log
+```
+
+---
+
+## 12 · 🛠 Troubleshooting
+
+| Problem | Solution |
 | :--- | :--- |
-| **GitHub Repository** | [github.com/fahadwaheedhk](https://github.com/fahadwaheedhk) |
-| **Professional Network** | [linkedin.com/in/fahadwaheedhk](https://linkedin.com/in/fahad-waheed-hk-7a128932a) |
-| **Global Communications** | [@Fahad_Waheed_Hk](https://x.com/fahad_waheed_hk?s=11) |
-| **Secure Cryptographic Email** | `fahadwaheedhk@protonmail.com` |
+| **"AI engine unavailable"** | Start Ollama using `ollama serve` in a separate terminal |
+| **"model 'llama3' not found"** | Run `ollama pull llama3` in your terminal |
+| **Port 8501 in use** | Run Streamlit on a different port: `streamlit run apex_sec.py --server.port 8502` |
+| **CISA sync fails** | Verify internet connectivity — required for initial feed sync |
+| **Slow inference** | Lower `Max Tokens` in sidebar settings or ensure 8+ GB free RAM |
+| **Permission denied on config/** | Grant read/write permissions: `chmod -R u+w config/` |
+| **Streamlit not found** | Ensure virtual environment is active: `source venv/bin/activate` |
+| **Ollama won't start** | Check service status: `systemctl status ollama` |
+| **Out of memory during inference** | Use a smaller model: `ollama pull llama3:8b-instruct-q4_0` |
+
+---
+
+## 13 · ⚖️ Legal & Educational Purpose
+
+> ⚠️ **MANDATORY SECURITY COMPLIANCE NOTICE**
+>
+> APEX-SEC is engineered strictly for **authorized security audits**, **academic research**, **defensive infrastructure hardening**, and **legitimate bug bounty operations**.
+>
+> - **Explicit Authorization** — Operators must secure legal, written consent from target system owners prior to executing any security assessments.
+> - **Regulatory Adherence** — Users retain sole legal accountability for complying with all regional, national, and international cybersecurity frameworks.
+> - **Educational Use** — This tool is provided for educational and research purposes to help security professionals learn structured methodologies in controlled environments.
+> - **Zero Liability** — The developer accepts absolute zero liability or responsibility for unauthorized intrusions, infrastructure damages, or malicious activities conducted utilizing this suite.
+
+### 🙏 Why This Tool Exists
+
+APEX-SEC is built **primarily as an educational platform**. It is intended to:
+
+- Help students and junior analysts learn structured penetration testing methodologies
+- Provide a sandboxed environment to study real-world attack vectors safely
+- Enable defenders to understand offensive techniques for better detection engineering
+- Support researchers in documenting and reproducing vulnerabilities responsibly
+
+**Use it wisely, ethically, and legally.**
+
+---
+
+## 14 · 📞 Connect with the Developer
+
+| Platform | Channel |
+| :--- | :--- |
+| **GitHub Repository** | `github.com/fahadwaheedhk` |
+| **Professional Network** | `linkedin.com/in/fahadwaheedhk` |
+| **Global Communications** | `@Fahad_Waheed_Hk` |
+| **Secure Email** | `fahadwaheedhk@protonmail.com` |
+
+---
+
+## 15 · 🎁 Appendix — Quick Command Reference
+
+### Ollama Operations
+
+```bash
+ollama serve
+```
+
+```bash
+ollama list
+```
+
+```bash
+ollama pull llama3
+```
+
+```bash
+ollama pull dolphin-mixtral
+```
+
+```bash
+ollama pull qwen2.5:14b
+```
+
+### Launch Commands
+
+```bash
+cd ~/apex-sec
+```
+
+```bash
+source venv/bin/activate
+```
+
+```bash
+streamlit run apex_sec.py
+```
+
+### Custom Port
+
+```bash
+streamlit run apex_sec.py --server.port 8502
+```
+
+### Remote Access
+
+```bash
+streamlit run apex_sec.py --server.address 0.0.0.0
+```
+
+### Logs
+
+```bash
+tail -f config/apex_sec.log
+```
+
+### Reset Configuration
+
+```bash
+rm -rf config/
+```
+
+### Update APEX-SEC
+
+```bash
+cd ~/apex-sec
+```
+
+```bash
+git pull
+```
+
+```bash
+source venv/bin/activate
+```
+
+```bash
+pip install -r requirements.txt
+```
+
+### Application Paths
+
+| Item | Path |
+| :--- | :--- |
+| Application Script | `~/apex-sec/apex_sec.py` |
+| Configuration | `~/apex-sec/config/apex_config.json` |
+| Memory Database | `~/apex-sec/config/apex_memory.db` |
+| Threat Intel Cache | `~/apex-sec/config/threat_intel.json` |
+| Evidence Vault | `~/apex-sec/config/evidence/` |
+| Reports | `~/apex-sec/config/reports/` |
+| Logs | `~/apex-sec/config/apex_sec.log` |
+| Virtual Environment | `~/apex-sec/venv/` |
+
+### Recommended Models
+
+| Model | Size | Best For |
+| :--- | :--- | :--- |
+| `llama3` | 4.7 GB | General purpose (default) |
+| `llama3.1` | 4.7 GB | Improved reasoning |
+| `dolphin-mixtral` | 26 GB | Uncensored / exploit research |
+| `qwen2.5:14b` | 9 GB | Multilingual |
+| `mistral` | 4.1 GB | Fast inference |
 
 ---
 
 <div align="center">
 
+## ⚡ APEX-SEC v1.0.0
+
+**Built for the Operators, by an Operator.**
+
+_100% On-Premises. 100% Yours._
+
+[⬆ Back to Top](#-apex-sec)
+
 </div>
+
+---
