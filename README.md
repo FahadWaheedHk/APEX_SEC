@@ -506,8 +506,8 @@ APEX-SEC is built **primarily as an educational platform**. It is intended to:
 
 | Platform | Channel |
 | :--- | :--- |
-| **GitHub Repository** | `github.com/fahadwaheedhk` |
-| **Professional Network** | `linkedin.com/in/fahadwaheedhk` |
+| **GitHub Repository** | `https://github.com/FahadWaheedHk` |
+| **Professional Network** | `https://pk.linkedin.com/in/fahad-waheed-hk-7a128932a` |
 | **Global Communications** | `@Fahad_Waheed_Hk` |
 | **Secure Email** | `fahadwaheedhk@protonmail.com` |
 
