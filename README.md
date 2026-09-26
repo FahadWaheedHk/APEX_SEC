@@ -18,44 +18,39 @@
 
 ---
 
-## 📖 Navigation Menu
+## 📖 Table of Contents
 
-| # | Section | Description |
-| :---: | :--- | :--- |
-| 1 | [🎯 Overview](#1--overview) | What is APEX-SEC and why it exists |
-| 2 | [⚔️ Core Capabilities](#2-️-core-capabilities) | Red · Blue · API · IoT operations |
-| 3 | [🎭 Operator Personas](#3--operator-personas) | 12 specialized operator roles |
-| 4 | [🧰 Built-in Tools](#4--built-in-tools) | Encoders, hashers, generators |
-| 5 | [🔐 Security Model](#5--security-model) | Air-gapped, local-only design |
-| 6 | [💻 System Requirements](#6--system-requirements) | RAM · Storage · CPU · OS |
-| 7 | [📦 Step-by-Step Installation](#7--step-by-step-installation) | Manual setup, one command at a time |
-| 8 | [🚀 Launch Sequence](#8--launch-sequence) | How to start the tool |
-| 9 | [🎬 First-Run Walkthrough](#9--first-run-walkthrough) | Your first 5 minutes inside APEX-SEC |
-| 10 | [📡 Threat Intelligence Sync](#10--threat-intelligence-sync) | CISA KEV + NVD workflow |
-| 11 | [🗂 Project Structure](#11--project-structure) | Files and folders |
-| 12 | [🛠 Troubleshooting](#12--troubleshooting) | Fix common issues |
-| 13 | [⚖️ Legal & Educational Purpose](#13-️-legal--educational-purpose) | Compliance notice |
-| 14 | [📞 Connect with the Developer](#14--connect-with-the-developer) | Developer channels |
-| 15 | [🎁 Appendix — Quick Command Reference](#15--appendix--quick-command-reference) | All commands in one place |
+1. [🎯 Overview](#-overview)
+2. [⚔️ Core Capabilities](#️-core-capabilities)
+3. [🎭 Operator Personas](#-operator-personas)
+4. [🧰 Built-in Tools](#-built-in-tools)
+5. [🔐 Security Model](#-security-model)
+6. [💻 System Requirements](#-system-requirements)
+7. [📦 Step-by-Step Installation](#-step-by-step-installation)
+8. [🚀 Launch Sequence](#-launch-sequence)
+9. [🎬 First-Run Walkthrough](#-first-run-walkthrough)
+10. [📡 Threat Intelligence Sync](#-threat-intelligence-sync)
+11. [🗂 Project Structure](#-project-structure)
+12. [🛠 Troubleshooting](#-troubleshooting)
+13. [⚖️ Legal & Educational Purpose](#️-legal--educational-purpose)
+14. [📞 Connect with the Developer](#-connect-with-the-developer)
+15. [🎁 Appendix — Quick Command Reference](#-appendix--quick-command-reference)
 
 ---
 
-## 1 · 🎯 Overview
+## 🎯 Overview
 
-**APEX-SEC** is a fully **on-premises, air-gapped Cyber Operations Suite** designed for Principal Security Researchers, Red Team Operators, Bug Bounty Hunters, and SOC Analysts.
+**APEX-SEC** is a fully on-premises, air-gapped Cyber Operations Suite engineered for Principal Security Researchers, Red Team Operators, Bug Bounty Hunters, and SOC Analysts who demand a tactical co-pilot that respects both operational security and methodological rigor.
 
-It is not another AI chatbot. It is a **tactical operator assistant** that:
+Unlike typical AI security wrappers that dump static payload lists or produce generic advisories, APEX-SEC behaves as a **stateful tactical operator**. It ingests target parameters — OS fingerprint, network scope, technology stack, and raw terminal output — and responds with **structured, sequential attack or defense workflows**. Every recommendation is scoped, every payload is contextualized, and every session is preserved locally.
 
-- Evaluates target parameters — OS, scope, tech stack, terminal logs
-- Guides the operator through **structured offensive methodologies**, step by step
-- Generates **precise attack vectors, payloads, and defensive mitigations**
-- Stores every session, finding, and screenshot **locally** — no cloud, no leaks
+The suite is architected around **six operational layers**: foundation (config, logging, constants), persistence (SQLite memory and evidence vault), domain logic (vulnerability tracking, payload library, threat intelligence), intelligence (persona engine, prompt engineering, LLM bridge), interface (Streamlit UI with seven operational tabs), and utilities (encoders, hashers, report generators). This layered design guarantees that intelligence, persistence, and interface concerns remain cleanly separated — enabling the operator to swap models, extend personas, or add tools without destabilizing the core.
 
-Whether you are profiling an attack surface, tracking a live CVE, generating a professional engagement report, or studying detection engineering — APEX-SEC keeps you in the driver's seat with **one consistent, expert-level workflow**.
+Whether you are scoping an external engagement, reproducing a live CVE, authoring a client-ready vulnerability report, or studying adversarial TTPs for detection engineering, APEX-SEC delivers a **single, consistent, expert-level workflow** — fully offline, fully yours.
 
 ---
 
-## 2 · ⚔️ Core Capabilities
+## ⚔️ Core Capabilities
 
 ### 🔴 Red Team Operations
 
@@ -94,7 +89,7 @@ Whether you are profiling an attack surface, tracking a live CVE, generating a p
 
 ---
 
-## 3 · 🎭 Operator Personas
+## 🎭 Operator Personas
 
 | Icon | Persona | Specialty |
 | :---: | :--- | :--- |
@@ -113,7 +108,7 @@ Whether you are profiling an attack surface, tracking a live CVE, generating a p
 
 ---
 
-## 4 · 🧰 Built-in Tools
+## 🧰 Built-in Tools
 
 | Tool | Purpose |
 | :--- | :--- |
@@ -126,7 +121,7 @@ Whether you are profiling an attack surface, tracking a live CVE, generating a p
 
 ---
 
-## 5 · 🔐 Security Model
+## 🔐 Security Model
 
 | Layer | Implementation |
 | :--- | :--- |
@@ -141,13 +136,13 @@ Whether you are profiling an attack surface, tracking a live CVE, generating a p
 
 ---
 
-## 6 · 💻 System Requirements
+## 💻 System Requirements
 
 | Resource | Minimum | Recommended |
 | :--- | :--- | :--- |
 | **RAM** | 8 GB DDR4 | 16–32 GB DDR4/DDR5 |
-| **Storage (Free)** | 12 GB | 25 GB NVMe SSD |
 | **CPU** | Intel i5 (8th Gen) / Ryzen 5 | Intel i7/i9 · Ryzen 7/9 |
+| **Storage (Free)** | 12 GB | 25 GB NVMe SSD |
 | **GPU** | Optional | NVIDIA RTX (CUDA) |
 | **OS** | Any modern Linux | Kali Linux 2024.x · Ubuntu 22.04+ |
 | **Python** | 3.10+ | 3.11+ |
@@ -165,7 +160,7 @@ Whether you are profiling an attack surface, tracking a live CVE, generating a p
 
 ---
 
-## 7 · 📦 Step-by-Step Installation
+## 📦 Step-by-Step Installation
 
 > 🛠️ **Manual installation.** Copy each command one at a time, paste into your terminal, and press Enter.
 >
@@ -353,7 +348,7 @@ pip install --upgrade pip && pip install streamlit requests langchain langchain-
 
 ---
 
-## 8 · 🚀 Launch Sequence
+## 🚀 Launch Sequence
 
 > 🖥️ **Open THREE separate terminals. Keep them all running.**
 
@@ -399,7 +394,7 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 
 ---
 
-## 9 · 🎬 First-Run Walkthrough
+## 🎬 First-Run Walkthrough
 
 | # | Step | Action |
 | :---: | :--- | :--- |
@@ -413,7 +408,7 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 
 ---
 
-## 10 · 📡 Threat Intelligence Sync
+## 📡 Threat Intelligence Sync
 
 | Step | Action | Result |
 | :---: | :--- | :--- |
@@ -425,7 +420,7 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 
 ---
 
-## 11 · 🗂 Project Structure
+## 🗂 Project Structure
 
 ```
 apex-sec/
@@ -467,7 +462,7 @@ config/
 
 ---
 
-## 12 · 🛠 Troubleshooting
+## 🛠 Troubleshooting
 
 | Problem | Solution |
 | :--- | :--- |
@@ -483,7 +478,7 @@ config/
 
 ---
 
-## 13 · ⚖️ Legal & Educational Purpose
+## ⚖️ Legal & Educational Purpose
 
 > ⚠️ **MANDATORY SECURITY COMPLIANCE NOTICE**
 >
@@ -507,7 +502,7 @@ APEX-SEC is built **primarily as an educational platform**. It is intended to:
 
 ---
 
-## 14 · 📞 Connect with the Developer
+## 📞 Connect with the Developer
 
 | Platform | Channel |
 | :--- | :--- |
@@ -518,7 +513,7 @@ APEX-SEC is built **primarily as an educational platform**. It is intended to:
 
 ---
 
-## 15 · 🎁 Appendix — Quick Command Reference
+## 🎁 Appendix — Quick Command Reference
 
 ### Ollama Operations
 
