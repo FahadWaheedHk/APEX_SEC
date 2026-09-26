@@ -162,6 +162,7 @@ Whether you are scoping an external engagement, reproducing a live CVE, authorin
 
 ## 📦 Step-by-Step Installation
 
+> [!WARNING]
 > 🛠️ **Manual installation.** Copy each command one at a time, paste into your terminal, and press Enter.
 >
 > ⚠️ *Do NOT skip steps. Do NOT run the next command until the previous one finishes.*
@@ -480,7 +481,8 @@ config/
 
 ## ⚖️ Legal & Educational Purpose
 
-> ⚠️ **MANDATORY SECURITY COMPLIANCE NOTICE**
+> [!CAUTION]
+> **MANDATORY SECURITY COMPLIANCE NOTICE**
 >
 > APEX-SEC is engineered strictly for **authorized security audits**, **academic research**, **defensive infrastructure hardening**, and **legitimate bug bounty operations**.
 >
@@ -502,17 +504,18 @@ APEX-SEC is built **primarily as an educational platform**. It is intended to:
 
 ---
 
+---
+
 ## 📞 Connect with the Developer
 
 | Platform | Channel |
 | :--- | :--- |
-| **GitHub Repository** | `https://github.com/FahadWaheedHk` |
-| **Professional Network** | `https://pk.linkedin.com/in/fahad-waheed-hk-7a128932a` |
-| **Global Communications** | `@Fahad_Waheed_Hk` |
-| **Secure Email** | `fahadwaheedhk@protonmail.com` |
+| **GitHub Repository** | [github.com/FahadWaheedHk](https://github.com/FahadWaheedHk) |
+| **Professional Network** | [linkedin.com/in/fahad-waheed-hk](https://pk.linkedin.com/in/fahad-waheed-hk-7a128932a) |
+| **Global Communications** | [@Fahad_Waheed_Hk](https://x.com/fahad_waheed_hk) |
+| **Secure Email** | [fahadwaheedhk@protonmail.com](mailto:fahadwaheedhk@protonmail.com) |
 
 ---
-
 ## 🎁 Appendix — Quick Command Reference
 
 ### Ollama Operations
