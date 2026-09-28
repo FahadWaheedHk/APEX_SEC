@@ -8,7 +8,7 @@
 
 ---
 
-**Version** `1.0.0` · **Platform** `Linux` · **License** `MIT` · **Engine** `Ollama + Llama 3`
+**Version** `1.1.0` · **Platform** `Linux` · **License** `MIT` · **Engine** `Ollama + Llama 3`
 
 **Built by:** Fahad Waheed HK — *For the Operators, by an Operator.*
 
@@ -242,7 +242,7 @@ pip install --upgrade pip
 ```
 
 ```bash
-pip install streamlit requests langchain langchain-community langchain-ollama
+pip install streamlit requests langchain-community
 ```
 
 **Step 10 — Verify All Files Are Present**
@@ -344,7 +344,7 @@ python3 -m venv venv && source venv/bin/activate
 **Step 7 — Install Python Packages**
 
 ```bash
-pip install --upgrade pip && pip install streamlit requests langchain langchain-community langchain-ollama
+pip install streamlit requests langchain-community
 ```
 
 ---
