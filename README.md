@@ -411,25 +411,27 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 
 ## 🎬 First-Run Walkthrough
 
-# Step Action
-1 Sidebar → Target Profile Enter target IP, OS, technology stack, and environment details
-2 Sidebar → AI Model Config Select llama3 (or dolphin-mixtral for uncensored research)
-3 Sidebar → Persona Choose your operator role (e.g., Bug Bounty Hunter)
-4 Sidebar → Threat Intelligence Load live KEV entries (or use local JSON)
-5 Chat Tab Describe your target, paste errors, or share a URL. The AI will ask for system details, guide you through recon, and step-by-step exploitation.
-6 Payload Forge Tab Generate novel WAF-bypass payloads on the fly.
-7 Reports Tab Export structured findings into Markdown · HTML · JSON
+| # | Step | Action |
+| :---: | :--- | :--- |
+| 1 | **Sidebar → Target Profile** | Enter target IP, OS, technology stack, and environment details |
+| 2 | **Sidebar → AI Model Config** | Select `llama3` (or `dolphin-mixtral` for uncensored research) |
+| 3 | **Sidebar → Persona** | Choose your operator role (e.g., Bug Bounty Hunter) |
+| 4 | **Sidebar → Threat Intelligence** | Load live KEV entries (or use local JSON) |
+| 5 | **Chat Tab** | Describe your target, paste errors, or share a URL. The AI will ask for system details, guide you through recon, and step-by-step exploitation. |
+| 6 | **Payload Forge Tab** | Generate novel WAF-bypass payloads on the fly. |
+| 7 | **Reports Tab** | Export structured findings into Markdown · HTML · JSON |
 
 ---
 
 ## 📡 Threat Intelligence Sync
 
-Step Action Result
-1 Open dashboard at http://localhost:8501 Interface loads
-2 Sidebar → Threat Intelligence → Sync CISA Ingests latest exploited CVEs
-3 Sidebar → Cache Info Displays number of cached entries
-4 Tab → Tools → CVE Lookup (NVD) Fetches a specific CVE from NIST
-5 Tab → Vulnerabilities → Search CISA cache Filters KEV entries by keyword
+| Step | Action | Result |
+| :---: | :--- | :--- |
+| 1 | Open dashboard at `http://localhost:8501` | Interface loads |
+| 2 | Sidebar → Threat Intelligence → **Sync CISA** | Ingests latest exploited CVEs |
+| 3 | Sidebar → **Cache Info** | Displays number of cached entries |
+| 4 | Tab → Tools → **CVE Lookup (NVD)** | Fetches a specific CVE from NIST |
+| 5 | Tab → Vulnerabilities → **Search CISA cache** | Filters KEV entries by keyword |
 
 ---
 
@@ -458,7 +460,7 @@ apex-sec/
     └── apex_sec.log         # Application log
 ```
 
-requirements.txt
+**requirements.txt**
 
 ```txt
 streamlit>=1.30.0
@@ -468,7 +470,7 @@ langchain-community>=0.2.0
 langchain-ollama>=0.1.0
 ```
 
-.gitignore
+**.gitignore**
 
 ```text
 __pycache__/
