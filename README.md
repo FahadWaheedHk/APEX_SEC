@@ -195,37 +195,37 @@ sudo apt update
 sudo apt upgrade -y
 ```
 
-Step 2 — Install Python 3, pip, venv, curl, git
+**Step 2 — Install Python 3, pip, venv, curl, git**
 
 ```bash
 sudo apt install python3 python3-pip python3-venv curl git -y
 ```
 
-Step 3 — Verify Python Installation
+**Step 3 — Verify Python Installation**
 
 ```bash
 python3 --version
 ```
 
-Step 4 — Install Ollama Engine
+**Step 4 — Install Ollama Engine**
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-Step 5 — Verify Ollama Installation
+**Step 5 — Verify Ollama Installation**
 
 ```bash
 ollama --version
 ```
 
-Step 6 — Pull the Llama 3 Core Model
+**Step 6 — Pull the Llama 3 Core Model**
 
 ```bash
 ollama pull llama3
 ```
 
-Step 7 — Clone the APEX-SEC Repository
+**Step 7 — Clone the APEX-SEC Repository**
 
 ```bash
 cd ~
@@ -239,7 +239,7 @@ git clone https://github.com/fahadwaheedhk/apex-sec.git
 cd apex-sec
 ```
 
-Step 8 — Create a Python Virtual Environment
+**Step 8 — Create a Python Virtual Environment**
 
 ```bash
 python3 -m venv venv
@@ -249,7 +249,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-Step 9 — Install Python Dependencies
+**Step 9 — Install Python Dependencies**
 
 ```bash
 pip install --upgrade pip
@@ -259,7 +259,7 @@ pip install --upgrade pip
 pip install streamlit requests langchain-community
 ```
 
-Step 10 — Verify All Files Are Present
+**Step 10 — Verify All Files Are Present**
 
 ```bash
 ls -la
@@ -271,45 +271,45 @@ chmod +x apex_sec.py
 
 ---
 
-🐧 Arch Linux
+### 🐧 Arch Linux
 
-Step 1 — Update System
+**Step 1 — Update System**
 
 ```bash
 sudo pacman -Syu
 ```
 
-Step 2 — Install Dependencies
+**Step 2 — Install Dependencies**
 
 ```bash
 sudo pacman -S python python-pip git curl base-devel
 ```
 
-Step 3 — Install Ollama
+**Step 3 — Install Ollama**
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-Step 4 — Pull Model
+**Step 4 — Pull Model**
 
 ```bash
 ollama pull llama3
 ```
 
-Step 5 — Clone Repository
+**Step 5 — Clone Repository**
 
 ```bash
 cd ~ && git clone https://github.com/fahadwaheedhk/apex-sec.git && cd apex-sec
 ```
 
-Step 6 — Create Virtual Environment
+**Step 6 — Create Virtual Environment**
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
 ```
 
-Step 7 — Install Python Packages
+**Step 7 — Install Python Packages**
 
 ```bash
 pip install --upgrade pip && pip install streamlit requests langchain langchain-community langchain-ollama
@@ -317,45 +317,45 @@ pip install --upgrade pip && pip install streamlit requests langchain langchain-
 
 ---
 
-🐧 Fedora · RHEL
+### 🐧 Fedora · RHEL
 
-Step 1 — Update System
+**Step 1 — Update System**
 
 ```bash
 sudo dnf update -y
 ```
 
-Step 2 — Install Dependencies
+**Step 2 — Install Dependencies**
 
 ```bash
 sudo dnf install python3 python3-pip git curl -y
 ```
 
-Step 3 — Install Ollama
+**Step 3 — Install Ollama**
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-Step 4 — Pull Model
+**Step 4 — Pull Model**
 
 ```bash
 ollama pull llama3
 ```
 
-Step 5 — Clone Repository
+**Step 5 — Clone Repository**
 
 ```bash
 cd ~ && git clone https://github.com/fahadwaheedhk/apex-sec.git && cd apex-sec
 ```
 
-Step 6 — Create Virtual Environment
+**Step 6 — Create Virtual Environment**
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
 ```
 
-Step 7 — Install Python Packages
+**Step 7 — Install Python Packages**
 
 ```bash
 pip install streamlit requests langchain-community
@@ -363,17 +363,17 @@ pip install streamlit requests langchain-community
 
 ---
 
-🚀 Launch Sequence
+## 🚀 Launch Sequence
 
-🖥️ Open THREE separate terminals. Keep them all running.
+**🖥️ Open THREE separate terminals. Keep them all running.**
 
-Terminal 1 — Start Ollama Engine
+**Terminal 1 — Start Ollama Engine**
 
 ```bash
 ollama serve
 ```
 
-Terminal 2 — Launch APEX-SEC Dashboard
+**Terminal 2 — Launch APEX-SEC Dashboard**
 
 ```bash
 cd ~/apex-sec
@@ -387,13 +387,13 @@ source venv/bin/activate
 streamlit run apex_sec.py
 ```
 
-Terminal 3 — Monitor (Optional)
+**Terminal 3 — Monitor (Optional)**
 
 ```bash
 htop
 ```
 
-Access the Web Interface
+***Access the Web Interface***
 
 Open your browser and navigate to:
 
@@ -401,7 +401,7 @@ Open your browser and navigate to:
 http://localhost:8501
 ```
 
-Remote Access (Lab / VM only)
+**Remote Access (Lab / VM only)**
 
 ```bash
 streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
@@ -409,7 +409,7 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 
 ---
 
-🎬 First-Run Walkthrough
+## 🎬 First-Run Walkthrough
 
 # Step Action
 1 Sidebar → Target Profile Enter target IP, OS, technology stack, and environment details
@@ -422,7 +422,7 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 
 ---
 
-📡 Threat Intelligence Sync
+## 📡 Threat Intelligence Sync
 
 Step Action Result
 1 Open dashboard at http://localhost:8501 Interface loads
@@ -433,7 +433,7 @@ Step Action Result
 
 ---
 
-🗂 Project Structure
+## 🗂 Project Structure
 
 ```text
 apex-sec/
@@ -482,7 +482,7 @@ config/
 
 ---
 
-🛠 Troubleshooting
+## 🛠 Troubleshooting
 
 Problem Solution
 "AI engine unavailable" Start Ollama using ollama serve in a separate terminal
@@ -497,7 +497,7 @@ Out of memory during inference Use a smaller model: ollama pull llama3:8b-instru
 
 ---
 
-⚖️ Legal & Educational Purpose
+## ⚖️ Legal & Educational Purpose
 
 [!CAUTION]
 MANDATORY SECURITY COMPLIANCE NOTICE
@@ -509,7 +509,7 @@ APEX-SEC is engineered strictly for authorized security audits, academic researc
 · Educational Use — This tool is provided for educational and research purposes to help security professionals learn structured methodologies in controlled environments.
 · Zero Liability — The developer accepts absolute zero liability or responsibility for unauthorized intrusions, infrastructure damages, or malicious activities conducted utilizing this suite.
 
-🙏 Why This Tool Exists
+## 🙏 Why This Tool Exists
 
 APEX-SEC is built primarily as an educational platform. It is intended to:
 
@@ -522,7 +522,7 @@ Use it wisely, ethically, and legally.
 
 ---
 
-📞 Connect with the Developer
+## 📞 Connect with the Developer
 
 Platform Channel
 GitHub Repository github.com/FahadWaheedHk
@@ -532,9 +532,9 @@ Secure Email fahadwaheedhk@protonmail.com
 
 ---
 
-🎁 Appendix — Quick Command Reference
+## 🎁 Appendix — Quick Command Reference
 
-Ollama Operations
+***Ollama Operations***
 
 ```bash
 ollama serve
@@ -556,7 +556,7 @@ ollama pull dolphin-mixtral
 ollama pull qwen2.5:14b
 ```
 
-Launch Commands
+**Launch Commands**
 
 ```bash
 cd ~/apex-sec
@@ -570,31 +570,31 @@ source venv/bin/activate
 streamlit run apex_sec.py
 ```
 
-Custom Port
+**Custom Port**
 
 ```bash
 streamlit run apex_sec.py --server.port 8502
 ```
 
-Remote Access
+**Remote Access**
 
 ```bash
 streamlit run apex_sec.py --server.address 0.0.0.0
 ```
 
-Logs
+**Logs**
 
 ```bash
 tail -f config/apex_sec.log
 ```
 
-Reset Configuration
+**Reset Configuration**
 
 ```bash
 rm -rf config/
 ```
 
-Update APEX-SEC
+**Update APEX-SEC**
 
 ```bash
 cd ~/apex-sec
@@ -612,7 +612,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Application Paths
+## Application Paths
 
 Item Path
 Application Script ~/apex-sec/apex_sec.py
@@ -624,7 +624,7 @@ Reports ~/apex-sec/config/reports/
 Logs ~/apex-sec/config/apex_sec.log
 Virtual Environment ~/apex-sec/venv/
 
-Recommended Models
+## Recommended Models
 
 Model Size Best For
 llama3 4.7 GB General purpose (default)
