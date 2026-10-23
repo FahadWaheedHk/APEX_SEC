@@ -486,51 +486,53 @@ config/
 
 ## 🛠 Troubleshooting
 
-Problem Solution
-"AI engine unavailable" Start Ollama using ollama serve in a separate terminal
-"model 'llama3' not found" Run ollama pull llama3 in your terminal
-Port 8501 in use Run Streamlit on a different port: streamlit run apex_sec.py --server.port 8502
-"Missing modules" error on launch Ensure all apex_*.py files (core, vulndb, payload, engine, ops, intel_dummy, ui) are in the same folder as apex_sec.py.
-Slow inference Lower Max Tokens in sidebar settings or ensure 8+ GB free RAM
-Permission denied on config/ Grant read/write permissions: chmod -R u+w config/
-Streamlit not found Ensure virtual environment is active: source venv/bin/activate
-Ollama won't start Check service status: systemctl status ollama
-Out of memory during inference Use a smaller model: ollama pull llama3:8b-instruct-q4_0
+| Problem | Solution |
+| :--- | :--- |
+| **"AI engine unavailable"** | Start Ollama using `ollama serve` in a separate terminal |
+| **"model 'llama3' not found"** | Run `ollama pull llama3` in your terminal |
+| **Port 8501 in use** | Run Streamlit on a different port: `streamlit run apex_sec.py --server.port 8502` |
+| **"Missing modules" error on launch** | Ensure all `apex_*.py` files (core, vulndb, payload, engine, ops, intel_dummy, ui) are in the same folder as `apex_sec.py`. |
+| **Slow inference** | Lower `Max Tokens` in sidebar settings or ensure 8+ GB free RAM |
+| **Permission denied on config/** | Grant read/write permissions: `chmod -R u+w config/` |
+| **Streamlit not found** | Ensure virtual environment is active: `source venv/bin/activate` |
+| **Ollama won't start** | Check service status: `systemctl status ollama` |
+| **Out of memory during inference** | Use a smaller model: `ollama pull llama3:8b-instruct-q4_0` |
 
 ---
 
 ## ⚖️ Legal & Educational Purpose
 
-[!CAUTION]
-MANDATORY SECURITY COMPLIANCE NOTICE
+> [!CAUTION]
+> **MANDATORY SECURITY COMPLIANCE NOTICE**
+> 
+> APEX-SEC is engineered strictly for **authorized security audits**, **academic research**, **defensive infrastructure hardening**, and **legitimate bug bounty operations**.
+> 
+> - **Explicit Authorization** — Operators must secure legal, written consent from target system owners prior to executing any security assessments.
+> - **Regulatory Adherence** — Users retain sole legal accountability for complying with all regional, national, and international cybersecurity frameworks.
+> - **Educational Use** — This tool is provided for educational and research purposes to help security professionals learn structured methodologies in controlled environments.
+> - **Zero Liability** — The developer accepts absolute zero liability or responsibility for unauthorized intrusions, infrastructure damages, or malicious activities conducted utilizing this suite.
 
-APEX-SEC is engineered strictly for authorized security audits, academic research, defensive infrastructure hardening, and legitimate bug bounty operations.
+### 🙏 Why This Tool Exists
 
-· Explicit Authorization — Operators must secure legal, written consent from target system owners prior to executing any security assessments.
-· Regulatory Adherence — Users retain sole legal accountability for complying with all regional, national, and international cybersecurity frameworks.
-· Educational Use — This tool is provided for educational and research purposes to help security professionals learn structured methodologies in controlled environments.
-· Zero Liability — The developer accepts absolute zero liability or responsibility for unauthorized intrusions, infrastructure damages, or malicious activities conducted utilizing this suite.
+APEX-SEC is built **primarily as an educational platform**. It is intended to:
 
-## 🙏 Why This Tool Exists
+- Help students and junior analysts learn structured penetration testing methodologies
+- Provide a sandboxed environment to study real-world attack vectors safely
+- Enable defenders to understand offensive techniques for better detection engineering
+- Support researchers in documenting and reproducing vulnerabilities responsibly
 
-APEX-SEC is built primarily as an educational platform. It is intended to:
-
-· Help students and junior analysts learn structured penetration testing methodologies
-· Provide a sandboxed environment to study real-world attack vectors safely
-· Enable defenders to understand offensive techniques for better detection engineering
-· Support researchers in documenting and reproducing vulnerabilities responsibly
-
-Use it wisely, ethically, and legally.
+**Use it wisely, ethically, and legally.**
 
 ---
 
 ## 📞 Connect with the Developer
 
-Platform Channel
-GitHub Repository github.com/FahadWaheedHk
-Professional Network linkedin.com/in/fahad-waheed-hk
-Global Communications @Fahad_Waheed_Hk
-Secure Email fahadwaheedhk@protonmail.com
+| Platform | Channel |
+| :--- | :--- |
+| **GitHub Repository** | [github.com/FahadWaheedHk](https://github.com/FahadWaheedHk) |
+| **Professional Network** | [linkedin.com/in/fahad-waheed-hk](https://pk.linkedin.com/in/fahad-waheed-hk-7a128932a) |
+| **Global Communications** | [@Fahad_Waheed_Hk](https://x.com/fahad_waheed_hk) |
+| **Secure Email** | [fahadwaheedhk@protonmail.com](mailto:fahadwaheedhk@protonmail.com) |
 
 ---
 
@@ -614,37 +616,39 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Application Paths
+### Application Paths
 
-Item Path
-Application Script ~/apex-sec/apex_sec.py
-Configuration ~/apex-sec/config/apex_config.json
-Memory Database ~/apex-sec/config/apex_memory.db
-Threat Intel Cache ~/apex-sec/config/threat_intel.json
-Evidence Vault ~/apex-sec/config/evidence/
-Reports ~/apex-sec/config/reports/
-Logs ~/apex-sec/config/apex_sec.log
-Virtual Environment ~/apex-sec/venv/
+| Item | Path |
+| :--- | :--- |
+| Application Script | `~/apex-sec/apex_sec.py` |
+| Configuration | `~/apex-sec/config/apex_config.json` |
+| Memory Database | `~/apex-sec/config/apex_memory.db` |
+| Threat Intel Cache | `~/apex-sec/config/threat_intel.json` |
+| Evidence Vault | `~/apex-sec/config/evidence/` |
+| Reports | `~/apex-sec/config/reports/` |
+| Logs | `~/apex-sec/config/apex_sec.log` |
+| Virtual Environment | `~/apex-sec/venv/` |
 
-## Recommended Models
+### Recommended Models
 
-Model Size Best For
-llama3 4.7 GB General purpose (default)
-llama3.1 4.7 GB Improved reasoning
-dolphin-mixtral 26 GB Uncensored / exploit research
-qwen2.5:14b 9 GB Multilingual
-mistral 4.1 GB Fast inference
+| Model | Size | Best For |
+| :--- | :--- | :--- |
+| `llama3` | 4.7 GB | General purpose (default) |
+| `llama3.1` | 4.7 GB | Improved reasoning |
+| `dolphin-mixtral` | 26 GB | Uncensored / exploit research |
+| `qwen2.5:14b` | 9 GB | Multilingual |
+| `mistral` | 4.1 GB | Fast inference |
 
 ---
 
 <div align="center">
 
-⚡ APEX-SEC v2.0.0
+## ⚡ APEX-SEC v2.0.0
 
-Built for the Operators, by an Operator.
+**Built for the Operators, by an Operator.**
 
-100% On-Premises. 100% Yours.
+_100% On-Premises. 100% Yours._
 
-⬆ Back to Top
+[⬆ Back to Top](#-apex-sec)
 
 </div>
