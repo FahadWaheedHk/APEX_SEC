@@ -393,6 +393,14 @@ streamlit run apex_sec.py
 htop
 ```
 
+**Verify Installation (Self-Test)**
+
+If you want to verify that all 7 modules are loaded correctly without opening the web interface, run the built-in self-test:
+
+```bash
+python apex_sec.py
+```
+
 ***Access the Web Interface***
 
 Open your browser and navigate to:
