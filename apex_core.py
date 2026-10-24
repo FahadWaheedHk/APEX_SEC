@@ -5,6 +5,11 @@ Holds the pieces every other module depends on: constants, logging,
 configuration, and the SQLite-backed memory store. Nothing here talks
 to the network or to a model -- it is pure plumbing so the higher layers
 stay readable.
+
+Revision notes:
+  - Config writes are atomic (tmp + replace) and roll back on failure.
+  - Log file failures no longer crash the app; console logging always works.
+  - MemoryManager opens fresh connections per operation and always closes.
 """
 
 from __future__ import annotations
@@ -36,7 +41,10 @@ KB_FILE = CONFIG_DIR / "threat_intel.json"
 LOG_FILE = CONFIG_DIR / "apex_sec.log"
 
 for _d in (CONFIG_DIR, EVIDENCE_DIR, REPORTS_DIR):
-    _d.mkdir(parents=True, exist_ok=True)
+    try:
+        _d.mkdir(parents=True, exist_ok=True)
+    except OSError as _exc:
+        print(f"[apex_core] Cannot create {_d}: {_exc}", file=sys.stderr)
 
 MAX_PROMPT_CHARS = 24000
 HTTP_TIMEOUT = 20
@@ -56,8 +64,8 @@ def _init_logger() -> logging.Logger:
         fh = logging.FileHandler(LOG_FILE, encoding="utf-8")
         fh.setFormatter(fmt)
         log.addHandler(fh)
-    except OSError:
-        pass
+    except OSError as exc:
+        print(f"[apex_core] File logging disabled: {exc}", file=sys.stderr)
     sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(fmt)
     log.addHandler(sh)
@@ -179,21 +187,30 @@ class ConfigManager:
         try:
             with self._path.open("r", encoding="utf-8") as fh:
                 raw = json.load(fh)
-            if isinstance(raw, dict):
-                for k in self.DEFAULTS:
-                    if k in raw:
-                        self._data[k] = raw[k]
         except (json.JSONDecodeError, OSError) as exc:
-            logger.warning("Config load failed: %s", exc)
+            logger.warning("Config load failed, using defaults: %s", exc)
+            self._data = dict(self.DEFAULTS)
+            return
+        if isinstance(raw, dict):
+            for k in self.DEFAULTS:
+                if k in raw:
+                    self._data[k] = raw[k]
 
     def _save(self) -> None:
+        tmp = self._path.with_suffix(".tmp")
         try:
-            tmp = self._path.with_suffix(".tmp")
             with tmp.open("w", encoding="utf-8") as fh:
                 json.dump(self._data, fh, indent=2, ensure_ascii=False)
-            tmp.replace(self._path)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, self._path)
         except OSError as exc:
             logger.error("Config save failed: %s", exc)
+            try:
+                if tmp.exists():
+                    tmp.unlink()
+            except OSError:
+                pass
 
     def get(self, key: str, default: Any = _MISSING) -> Any:
         if default is _MISSING:
@@ -230,7 +247,9 @@ class MemoryManager:
         self._init_schema()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path, check_same_thread=False, timeout=10)
+        conn = sqlite3.connect(
+            self._db_path, check_same_thread=False, timeout=10
+        )
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("PRAGMA journal_mode = WAL")
@@ -238,7 +257,8 @@ class MemoryManager:
 
     def _init_schema(self) -> None:
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 conn.executescript(
                     """
                     CREATE TABLE IF NOT EXISTS sessions (
@@ -278,6 +298,8 @@ class MemoryManager:
                     """
                 )
                 conn.commit()
+            finally:
+                conn.close()
         except sqlite3.Error as exc:
             logger.error("Schema init failed: %s", exc)
 
@@ -286,57 +308,74 @@ class MemoryManager:
         sid = session_id or str(uuid.uuid4())
         now = utc_now()
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 conn.execute(
                     "INSERT OR IGNORE INTO sessions VALUES (?, ?, ?, ?)",
                     (sid, title, now, now),
                 )
                 conn.commit()
+            finally:
+                conn.close()
         except sqlite3.Error as exc:
             logger.error("Session create failed: %s", exc)
         return sid
 
     def list_sessions(self) -> List[Dict[str, Any]]:
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 rows = conn.execute(
                     "SELECT * FROM sessions ORDER BY updated_at DESC"
                 ).fetchall()
+            finally:
+                conn.close()
             return [dict(r) for r in rows]
         except sqlite3.Error:
             return []
 
     def delete_session(self, session_id: str) -> None:
         try:
-            with self._connect() as conn:
-                conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
-                conn.execute("DELETE FROM evidence WHERE session_id = ?", (session_id,))
-                conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
+            conn = self._connect()
+            try:
+                conn.execute("DELETE FROM messages WHERE session_id = ?",
+                             (session_id,))
+                conn.execute("DELETE FROM evidence WHERE session_id = ?",
+                             (session_id,))
+                conn.execute("DELETE FROM sessions WHERE session_id = ?",
+                             (session_id,))
                 conn.commit()
+            finally:
+                conn.close()
         except sqlite3.Error as exc:
             logger.error("Delete failed: %s", exc)
 
     def add_message(self, session_id: str, role: str, content: str,
                     meta: Optional[Dict[str, Any]] = None) -> None:
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 conn.execute(
                     "INSERT INTO messages (session_id, role, content, meta, created_at) "
                     "VALUES (?, ?, ?, ?, ?)",
-                    (session_id, role, content, json.dumps(meta or {}), utc_now()),
+                    (session_id, role, content, json.dumps(meta or {}),
+                     utc_now()),
                 )
                 conn.execute(
                     "UPDATE sessions SET updated_at = ? WHERE session_id = ?",
                     (utc_now(), session_id),
                 )
                 conn.commit()
+            finally:
+                conn.close()
         except sqlite3.Error as exc:
             logger.error("Message add failed: %s", exc)
 
     def get_messages(self, session_id: str, limit: Optional[int] = None,
                      include_errors: bool = False) -> List[Dict[str, Any]]:
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 if limit:
                     rows = conn.execute(
                         "SELECT * FROM ("
@@ -347,38 +386,45 @@ class MemoryManager:
                     ).fetchall()
                 else:
                     rows = conn.execute(
-                        "SELECT * FROM messages WHERE session_id = ? ORDER BY id ASC",
+                        "SELECT * FROM messages WHERE session_id = ? "
+                        "ORDER BY id ASC",
                         (session_id,),
                     ).fetchall()
-            out = []
-            for r in rows:
-                d = dict(r)
-                if not include_errors:
-                    try:
-                        meta = json.loads(d.get("meta") or "{}")
-                    except json.JSONDecodeError:
-                        meta = {}
-                    if meta.get("error"):
-                        continue
-                out.append(d)
-            return out
+            finally:
+                conn.close()
         except sqlite3.Error:
             return []
+        out = []
+        for r in rows:
+            d = dict(r)
+            if not include_errors:
+                try:
+                    meta = json.loads(d.get("meta") or "{}")
+                except json.JSONDecodeError:
+                    meta = {}
+                if meta.get("error"):
+                    continue
+            out.append(d)
+        return out
 
     def count_messages(self, session_id: str) -> int:
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 row = conn.execute(
                     "SELECT COUNT(*) AS c FROM messages WHERE session_id = ?",
                     (session_id,),
                 ).fetchone()
+            finally:
+                conn.close()
             return int(row["c"]) if row else 0
         except sqlite3.Error:
             return 0
 
     def build_context(self, session_id: str, last_n: int = 40,
                       char_budget: int = MAX_PROMPT_CHARS) -> str:
-        msgs = self.get_messages(session_id, limit=last_n, include_errors=False)
+        msgs = self.get_messages(session_id, limit=last_n,
+                                 include_errors=False)
         if not msgs:
             return ""
         chunks: List[str] = []
@@ -397,32 +443,46 @@ class MemoryManager:
                      linked_cve: str = "", extracted_text: str = "") -> str:
         eid = str(uuid.uuid4())
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 conn.execute(
                     "INSERT INTO evidence VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (eid, session_id, filename, filepath, mime_type,
-                     size_bytes, caption, linked_cve, extracted_text, utc_now()),
+                     size_bytes, caption, linked_cve, extracted_text,
+                     utc_now()),
                 )
                 conn.commit()
+            finally:
+                conn.close()
         except sqlite3.Error as exc:
             logger.error("Evidence add failed: %s", exc)
         return eid
 
     def list_evidence(self, session_id: str) -> List[Dict[str, Any]]:
         try:
-            with self._connect() as conn:
+            conn = self._connect()
+            try:
                 rows = conn.execute(
-                    "SELECT * FROM evidence WHERE session_id = ? ORDER BY created_at ASC",
+                    "SELECT * FROM evidence WHERE session_id = ? "
+                    "ORDER BY created_at ASC",
                     (session_id,),
                 ).fetchall()
+            finally:
+                conn.close()
             return [dict(r) for r in rows]
         except sqlite3.Error:
             return []
 
     def delete_evidence(self, evidence_id: str) -> None:
         try:
-            with self._connect() as conn:
-                conn.execute("DELETE FROM evidence WHERE evidence_id = ?", (evidence_id,))
+            conn = self._connect()
+            try:
+                conn.execute(
+                    "DELETE FROM evidence WHERE evidence_id = ?",
+                    (evidence_id,),
+                )
                 conn.commit()
+            finally:
+                conn.close()
         except sqlite3.Error as exc:
             logger.error("Evidence delete failed: %s", exc)
