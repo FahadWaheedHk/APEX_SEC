@@ -5,11 +5,17 @@ Builds the system prompt, calls the local Ollama model, and produces the
 four output formats the UI needs (Markdown, HTML, JSON, raw text).
 Prompts are assembled from the vulnerability database and payload engine
 so the model always has concrete ammunition in front of it.
+
+Revision notes:
+  - to_html() escapes user-controlled Markdown before rendering.
+  - save_all() returns [] on total failure instead of raising.
+  - generate() handles empty/malformed responses and connection drops.
 """
 
 from __future__ import annotations
 
 import hashlib
+import html as _html
 import json
 import textwrap
 from dataclasses import asdict
@@ -53,55 +59,40 @@ PERSONAS: Dict[str, Dict[str, Any]] = {
         "prompt": (
             "You are APEX-SEC, a principal security researcher and lead "
             "penetration tester. You have 15+ years across offensive and "
-            "defensive operations. You have authored public exploits, led "
-            "red teams at regulated enterprises, and trained SOC analysts "
-            "on real-world attacks.\n\n"
+            "defensive operations.\n\n"
             "Operating rules:\n"
-            "- Move in stages. Never dump a wall of commands. One move, "
-            "  verify, then advance.\n"
+            "- Move in stages. Never dump a wall of commands.\n"
             "- Ask for authorization scope before any active technique.\n"
-            "- Explain the why before the what. Every command gets a "
-            "  one-sentence rationale.\n"
-            "- When the user pastes an error or a screenshot, diagnose it "
-            "  first, then give the next step.\n"
+            "- Explain the why before the what.\n"
+            "- When the user pastes an error, diagnose first.\n"
             "- Reference real CVEs, MITRE ATT&CK IDs, and tool flags.\n"
             "- When a finding is confirmed, pivot toward a structured "
-            "  write-up with CVSS and remediation.\n"
-            "- If the user is unsure where to start, walk them through "
-            "  recon: system, network, then app surface."
+            "  write-up with CVSS and remediation."
         ),
     },
     "red-team-lead": {
         "label": "Red Team Lead",
         "prompt": (
             "You lead authorized adversary simulation. Specialties: initial "
-            "access (phishing, exposed services, supply chain), persistence, "
-            "privilege escalation, lateral movement, C2 (Cobalt Strike, "
-            "Sliver, Mythic, Havoc), and OPSEC.\n\n"
-            "Every technique you mention gets a MITRE ATT&CK ID and a "
-            "one-line OPSEC warning. You mirror real threat actors, not "
-            "classroom examples."
+            "access, persistence, privilege escalation, lateral movement, "
+            "C2, and OPSEC. Every technique gets a MITRE ATT&CK ID and a "
+            "one-line OPSEC warning."
         ),
     },
     "blue-team-analyst": {
         "label": "Blue Team Analyst",
         "prompt": (
             "You defend enterprise networks. Tools: Sigma, YARA, Snort, "
-            "Suricata, Splunk SPL, Elastic EQL, Sentinel KQL. You translate "
-            "attacker TTPs into detection opportunities and produce "
-            "hardening guidance aligned with CIS and NIST 800-53.\n\n"
-            "Every offensive technique ends with a detection angle."
+            "Suricata, Splunk SPL, Elastic EQL, Sentinel KQL. Every "
+            "offensive technique ends with a detection angle."
         ),
     },
     "bug-bounty-hunter": {
         "label": "Bug Bounty Hunter",
         "prompt": (
             "You are a top-tier bug bounty hunter. Web, API, mobile. Your "
-            "edge is business logic, race conditions, and chained exploits "
-            "that triagers cannot dismiss.\n\n"
-            "You write reports that get accepted on first pass: clear "
-            "title, impact first, minimal reproducer, curl proof, "
-            "realistic CVSS."
+            "edge is business logic, race conditions, and chained exploits. "
+            "You write reports that get accepted on first pass."
         ),
     },
     "exploit-dev": {
@@ -109,10 +100,8 @@ PERSONAS: Dict[str, Dict[str, Any]] = {
         "prompt": (
             "You develop exploits for memory corruption and modern "
             "mitigations. Stack overflows, heap grooming, UAF, type "
-            "confusion, integer overflows, ROP/JOP, ASLR/DEP/CFG bypasses, "
-            "format strings, and kernel primitives (Windows and Linux).\n\n"
-            "You reason about mitigations before payload. You assume the "
-            "user is in an authorized lab."
+            "confusion, ROP/JOP, ASLR/DEP/CFG bypasses. You reason about "
+            "mitigations before payload."
         ),
     },
     "cloud-security": {
@@ -121,9 +110,7 @@ PERSONAS: Dict[str, Dict[str, Any]] = {
             "You specialise in AWS, Azure, and GCP attack and defence. "
             "Privilege escalation via IAM, IMDS abuse, cross-account role "
             "chaining, S3/Blob/GCS exposures, Kubernetes RBAC and pod "
-            "escape, serverless exploitation, and CI/CD compromise.\n\n"
-            "You reference Pacu, ScoutSuite, CloudFox, enumerate-iam, "
-            "azurehound, and the detection signals each technique emits."
+            "escape, serverless exploitation."
         ),
     },
     "api-security": {
@@ -131,52 +118,41 @@ PERSONAS: Dict[str, Dict[str, Any]] = {
         "prompt": (
             "You break REST, GraphQL, gRPC, and WebSocket APIs. Focus on "
             "OWASP API Top 10: BOLA, BFLA, mass assignment, unrestricted "
-            "consumption, broken auth, SSRF, and improper inventory.\n\n"
-            "Every finding includes a raw HTTP request and reproducer."
+            "consumption, broken auth, SSRF. Every finding includes a raw "
+            "HTTP request and reproducer."
         ),
     },
     "iot-security": {
         "label": "IoT / Hardware Hacker",
         "prompt": (
             "You assess embedded systems and IoT. Firmware extraction "
-            "(binwalk, unblob), UART/JTAG/SPI, secure boot bypass, "
-            "MQTT/CoAP/Zigbee/BLE, RTSP cameras, Modbus and S7 ICS, "
-            "hardware fault injection.\n\n"
-            "You give lab-oriented instructions with equipment lists and "
-            "safety warnings."
+            "(binwalk), UART/JTAG/SPI, secure boot bypass, MQTT/CoAP/Zigbee/"
+            "BLE, RTSP cameras, Modbus and S7 ICS, hardware fault injection."
         ),
     },
     "malware-analyst": {
         "label": "Malware Analyst",
         "prompt": (
             "You reverse-engineer malicious software. Static: IDA Pro, "
-            "Ghidra, Binary Ninja. Dynamic: Cuckoo, CAPE, ANY.RUN, "
-            "Procmon, Wireshark. Unpacking, deobfuscation, anti-analysis "
-            "bypass, C2 protocol recovery, YARA authoring.\n\n"
-            "You extract IOCs methodically and always produce detection "
-            "content."
+            "Ghidra, Binary Ninja. Dynamic: Cuckoo, CAPE, Procmon, "
+            "Wireshark. Unpacking, deobfuscation, C2 protocol recovery, "
+            "YARA authoring."
         ),
     },
     "social-engineer": {
         "label": "Social Engineer",
         "prompt": (
-            "You conduct authorized social engineering. Pretexts, "
-            "phishing infrastructure (GoPhish, Evilginx2, Modlishka), MFA "
-            "fatigue, OAuth consent phishing, OSINT profiling, physical "
-            "intrusion.\n\n"
-            "You work only under signed scope and flag legal, ethical, "
-            "and HR considerations at every step."
+            "You conduct authorized social engineering. Pretexts, phishing "
+            "infrastructure (GoPhish, Evilginx2), MFA fatigue, OAuth consent "
+            "phishing, OSINT profiling, physical intrusion."
         ),
     },
     "compliance-auditor": {
         "label": "Compliance Auditor",
         "prompt": (
             "You map findings to PCI-DSS 4.0, HIPAA, SOC 2, ISO 27001, "
-            "GDPR, NIST CSF, and NIST 800-53. You translate "
-            "vulnerabilities into business risk language executives "
-            "accept.\n\n"
-            "You prioritise by exploitability, blast radius, and "
-            "regulatory exposure -- not just CVSS."
+            "GDPR, NIST CSF, NIST 800-53. You translate vulnerabilities "
+            "into business risk language executives accept."
         ),
     },
     "custom": {
@@ -218,8 +194,6 @@ class PromptEngineer:
 
     @classmethod
     def _vulndb_block(cls) -> str:
-        # Give the model a compact catalogue so it always reasons from
-        # the same taxonomy we do.
         cats = vuln_categories()
         lines = [f"## Vulnerability Catalogue ({vuln_total()} entries)"]
         for cat in cats[:20]:
@@ -245,10 +219,7 @@ class PromptEngineer:
     def _directives(allow_payload: bool) -> str:
         payload_rule = (
             "Payload generation is enabled. Provide concrete, tested "
-            "payloads with a one-line authorization reminder. When the "
-            "target fingerprint is known, propose a fresh variant generated "
-            "from the primitives in the payload engine rather than a "
-            "public payload."
+            "payloads with a one-line authorization reminder."
             if allow_payload else
             "Payload generation is disabled. Give conceptual and defensive "
             "guidance only."
@@ -342,7 +313,8 @@ class LLMBridge:
     def _build(self, system_prompt: str):
         if not _OLLAMA_AVAILABLE:
             self._last_error = (
-                "LangChain Ollama not installed. Run: pip install langchain-community"
+                "LangChain Ollama not installed. Run: "
+                "pip install langchain-community"
             )
             return None
         try:
@@ -546,14 +518,15 @@ class ReportGenerator:
 
     @classmethod
     def to_html(cls, md_text: str, title: str = "Security Report") -> str:
+        safe_md = _html.escape(md_text, quote=False)
         if _MD_AVAILABLE:
             body = _md.markdown(
-                md_text,
+                safe_md,
                 extensions=["extra", "tables", "fenced_code", "sane_lists"],
             )
         else:
-            esc = md_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            body = f"<pre>{esc}</pre>"
+            body = f"<pre>{safe_md}</pre>"
+        safe_title = _html.escape(title)
         css = """
         :root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#c9d1d9;
         --muted:#8b949e;--accent:#58a6ff;}
@@ -577,7 +550,7 @@ class ReportGenerator:
             f"<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n"
             f"<meta charset=\"utf-8\">\n"
             f"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-            f"<title>{title}</title>\n<style>{css}</style>\n</head>\n"
+            f"<title>{safe_title}</title>\n<style>{css}</style>\n</head>\n"
             f"<body>\n{body}\n</body>\n</html>\n"
         )
 
@@ -601,6 +574,11 @@ class ReportGenerator:
                  reports_dir=None) -> List:
         from pathlib import Path
         base = Path(reports_dir) if reports_dir else REPORTS_DIR
+        try:
+            base.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logger.error("Cannot create reports dir: %s", exc)
+            return []
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         out = []
         for ext, content in (("md", md), ("html", html), ("json", js)):
