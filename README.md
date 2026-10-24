@@ -45,7 +45,7 @@
 
 Unlike typical AI security wrappers that dump static payload lists or produce generic advisories, APEX-SEC behaves as a **stateful tactical operator**. It ingests target parameters — OS fingerprint, network scope, technology stack, and raw terminal output — and responds with **structured, sequential attack or defense workflows**. Every recommendation is scoped, every payload is contextualized, and every session is preserved locally.
 
-In **Version 2.0**, the architecture has been completely overhauled into a **modular framework** (7 core modules + 1 main entry). It now features an **Advanced Vulnerability Catalogue** (100+ classes), an **Autonomous Payload Forge** capable of generating novel WAF-bypass payloads not found on the internet, and a massive expansion of the reasoning engine. The core principle remains the same: deliver a **single, consistent, expert-level workflow** — fully offline, fully yours.
+In **Version 2.0**, the architecture has been completely overhauled into a **modular framework** (7 core modules + 1 main entry).It now features an **Advanced Vulnerability Catalogue** (40+ classes mapped to OWASP Top 10 and modern attack surface), an **Autonomous Payload Forge** capable of generating novel WAF-bypass payloads not found on the internet, and a massive expansion of the reasoning engine. The core principle remains the same: deliver a **single, consistent, expert-level workflow** — fully offline, fully yours.
 
 ---
 
@@ -144,10 +144,8 @@ Version 2.0 introduces groundbreaking features for elite operators:
 | **Threat Feed** | CISA KEV cached locally in JSON |
 | **Evidence Vault** | Screenshots stored in `config/evidence/` |
 | **Session Isolation** | Unique session IDs — no cross-contamination |
+| **Authorization Gate** | Active operations refused unless `authorization_ref` is set AND target matches approved scope |
 | **Network** | Zero outbound traffic after model pull |
-
-> 🛡️ **Air-Gapped by Design.** Once dependencies are installed, APEX-SEC works entirely offline.
-
 ---
 
 ## 💻 System Requirements
@@ -256,7 +254,7 @@ pip install --upgrade pip
 ```
 
 ```bash
-pip install streamlit requests langchain-community
+pip install -r requirements.txt
 ```
 
 **Step 10 — Verify All Files Are Present**
@@ -312,7 +310,7 @@ python3 -m venv venv && source venv/bin/activate
 **Step 7 — Install Python Packages**
 
 ```bash
-pip install --upgrade pip && pip install streamlit requests langchain langchain-community langchain-ollama
+pip install --upgrade pip && pip install -r requirements.txt
 ```
 
 ---
@@ -358,7 +356,7 @@ python3 -m venv venv && source venv/bin/activate
 **Step 7 — Install Python Packages**
 
 ```bash
-pip install streamlit requests langchain-community
+pip install -r requirements.txt
 ```
 
 ---
@@ -385,6 +383,10 @@ source venv/bin/activate
 
 ```bash
 streamlit run apex_sec.py
+```
+**or**
+```bash
+streamlit run apex_ui.py
 ```
 
 **Terminal 3 — Monitor (Optional)**
@@ -414,6 +416,10 @@ http://localhost:8501
 ```bash
 streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 ```
+**or**
+```bash
+streamlit run apex_ui.py --server.address 0.0.0.0 --server.port 8501
+```
 
 ---
 
@@ -436,20 +442,19 @@ streamlit run apex_sec.py --server.address 0.0.0.0 --server.port 8501
 | Step | Action | Result |
 | :---: | :--- | :--- |
 | 1 | Open dashboard at `http://localhost:8501` | Interface loads |
-| 2 | Sidebar → Threat Intelligence → **Sync CISA** | Ingests latest exploited CVEs |
-| 3 | Sidebar → **Cache Info** | Displays number of cached entries |
-| 4 | Tab → Tools → **CVE Lookup (NVD)** | Fetches a specific CVE from NIST |
-| 5 | Tab → Vulnerabilities → **Search CISA cache** | Filters KEV entries by keyword |
-
+| 2 | Sidebar → Threat Intelligence → **Sync CISA KEV** | HTTPS fetch + schema validation + atomic cache write |
+| 3 | Sidebar → Threat Intelligence | Displays entry count and last sync time |
+| 4 | Tab → Tools → **CISA Search** | Filters cached KEV entries by keyword |
+| 5 | Tab → Tools → **NVD Lookup** | Live query to NIST NVD 2.0 for a specific CVE |
 ---
 
 ## 🗂 Project Structure
 
 ```text
 apex-sec/
-├── apex_sec.py              # Main entry point (self-test & UI boot)
+├── apex_sec.py              # Main entry (CLI self-test + --ui launch + streamlit run)
 ├── apex_core.py             # Config, Memory, Models, Logging
-├── apex_vulndb.py           # 100+ Vulnerability Knowledge Base
+├── apex_vulndb.py           # 40+ Vulnerability Knowledge Base (OWASP Top 10 + modern)
 ├── apex_payload.py          # Advanced Payload Engine & Novel Forge
 ├── apex_engine.py           # Personas, Prompt Builder, LLM, Reports
 ├── apex_ops.py              # Tracker, Chat Orchestrator, Bootstrap
@@ -470,12 +475,12 @@ apex-sec/
 
 **requirements.txt**
 
-```txt
-streamlit>=1.30.0
+```streamlit>=1.30.0
 requests>=2.31.0
 langchain>=0.2.0
 langchain-community>=0.2.0
 langchain-ollama>=0.1.0
+markdown>=3.5.0
 ```
 
 **.gitignore**
@@ -496,10 +501,10 @@ config/
 
 | Problem | Solution |
 | :--- | :--- |
-| **"AI engine unavailable"** | Start Ollama using `ollama serve` in a separate terminal |
+| | **"AI engine unavailable"** | Start Ollama in a separate terminal (`ollama serve`), then run `ollama pull llama3` |
 | **"model 'llama3' not found"** | Run `ollama pull llama3` in your terminal |
 | **Port 8501 in use** | Run Streamlit on a different port: `streamlit run apex_sec.py --server.port 8502` |
-| **"Missing modules" error on launch** | Ensure all `apex_*.py` files (core, vulndb, payload, engine, ops, intel_dummy, ui) are in the same folder as `apex_sec.py`. |
+|  | **"Missing modules" error on launch** | Run `python apex_sec.py` — it prints exactly which module is missing. All 8 files (`apex_core`, `apex_vulndb`, `apex_payload`, `apex_intel_dummy`, `apex_engine`, `apex_ops`, `apex_ui`, `apex_sec`) must be in the same folder. |
 | **Slow inference** | Lower `Max Tokens` in sidebar settings or ensure 8+ GB free RAM |
 | **Permission denied on config/** | Grant read/write permissions: `chmod -R u+w config/` |
 | **Streamlit not found** | Ensure virtual environment is active: `source venv/bin/activate` |
@@ -581,17 +586,37 @@ source venv/bin/activate
 ```bash
 streamlit run apex_sec.py
 ```
+**or**
+```bash
+python apex_sec.py
+```
+```bash
+python apex_sec.py --ui
+```
+```bash
+streamlit run apex_ui.py
+```
 
 **Custom Port**
 
 ```bash
 streamlit run apex_sec.py --server.port 8502
 ```
+**or**
+
+```bash
+streamlit run apex_ui.py --server.port 8502
+```
 
 **Remote Access**
 
 ```bash
 streamlit run apex_sec.py --server.address 0.0.0.0
+```
+**or**
+
+```bash
+streamlit run apex_ui.py --server.address 0.0.0.0
 ```
 
 **Logs**
