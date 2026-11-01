@@ -34,8 +34,9 @@
 12. [🗂 Project Structure](#-project-structure)
 13. [🛠 Troubleshooting](#-troubleshooting)
 14. [⚖️ Legal & Educational Purpose](#️-legal--educational-purpose)
-15. [📞 Connect with the Developer](#-connect-with-the-developer)
-16. [🎁 Appendix — Quick Command Reference](#-appendix--quick-command-reference)
+15. [🚧 Development Status & Implementation Notice](#-Development-Status-&-Implementation-Notice)
+18. [📞 Connect with the Developer](#-connect-with-the-developer)
+19. [🎁 Appendix — Quick Command Reference](#-appendix--quick-command-reference)
 
 ---
 
@@ -537,6 +538,25 @@ APEX-SEC is built **primarily as an educational platform**. It is intended to:
 **Use it wisely, ethically, and legally.**
 
 ---
+
+> [!IMPORTANT]
+> ## 🚧 Development Status & Implementation Notice
+>
+> APEX-SEC is an actively developed project and is not yet considered a fully completed release.
+>
+> Development is ongoing, with additional features, modules, integrations, and improvements planned for future updates.
+>
+> **Please Note:**
+>
+> - Features and capabilities described in this README may not all be fully implemented or integrated into the current codebase.
+> - Some components are already implemented, while others remain under development, testing, or are planned for future integration.
+> - The actual functionality of the project should be evaluated based on the current source code, not solely on the documented feature descriptions.
+> - Project architecture, functionality, and documentation may evolve as development progresses.
+>
+> Development is ongoing. This README describes the project's intended direction as well as its current capabilities; it should not be interpreted as confirmation that every documented feature is fully functional.
+>
+> Thank you for your interest in APEX-SEC. Contributions, feedback, and constructive suggestions are welcome.
+
 
 ## 📞 Connect with the Developer
 
